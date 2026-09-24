@@ -1,0 +1,256 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect a Daikin air conditioner",
+        "description": "Local control talks to the Wi-Fi adapter on your network and needs no account. Cloud control uses your Daikin AC (India) app account.",
+        "menu_options": {
+          "discover": "Find adapters on my network",
+          "local": "Enter adapter IP address",
+          "cloud": "Daikin AC app account (cloud)"
+        }
+      },
+      "local": {
+        "title": "Local adapter",
+        "data": {
+          "host": "Host",
+          "pin": "Lock PIN"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the air conditioner's Wi-Fi adapter.",
+          "pin": "Only needed if a lock password is set on the unit in the Daikin AC app."
+        }
+      },
+      "discover": {
+        "title": "Adapters found",
+        "data": {
+          "adapter": "Adapter"
+        }
+      },
+      "pin": {
+        "title": "Lock PIN required",
+        "description": "The adapter at {host} is locked. Enter the 4-digit lock PIN set in the Daikin AC app.",
+        "data": {
+          "pin": "Lock PIN"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure adapter",
+        "data": {
+          "host": "Host",
+          "pin": "Lock PIN"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the air conditioner's Wi-Fi adapter.",
+          "pin": "Only needed if a lock password is set on the unit."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Lock PIN rejected",
+        "description": "The adapter at {host} rejected the lock PIN. Enter the current PIN, or leave it empty if the lock was removed.",
+        "data": {
+          "pin": "Lock PIN"
+        }
+      },
+      "cloud": {
+        "title": "Daikin account login",
+        "menu_options": {
+          "cloud_password": "Phone number and password",
+          "cloud_otp": "Phone number and SMS code"
+        }
+      },
+      "reauth_cloud": {
+        "title": "Daikin account session expired",
+        "description": "Log in again to keep controlling your units through the cloud.",
+        "menu_options": {
+          "cloud_password": "Phone number and password",
+          "cloud_otp": "Phone number and SMS code"
+        }
+      },
+      "cloud_password": {
+        "title": "Daikin account",
+        "data": {
+          "phone": "Phone number",
+          "password": "Password"
+        },
+        "data_description": {
+          "phone": "The mobile number registered in the Daikin AC app, with country code (for example +919876543210)."
+        }
+      },
+      "cloud_otp": {
+        "title": "Daikin account",
+        "description": "An SMS code will be sent to this number.",
+        "data": {
+          "phone": "Phone number"
+        },
+        "data_description": {
+          "phone": "The mobile number registered in the Daikin AC app, with country code (for example +919876543210)."
+        }
+      },
+      "cloud_otp_verify": {
+        "title": "Enter SMS code",
+        "description": "Enter the code sent to {phone}.",
+        "data": {
+          "otp": "SMS code"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid phone number or password",
+      "invalid_otp": "The SMS code was not accepted",
+      "otp_rejected": "Daikin did not send an SMS code to this number",
+      "invalid_pin": "The lock PIN was rejected",
+      "pin_required": "This adapter is locked; enter its lock PIN",
+      "unsupported_device": "This adapter does not support the DSIOT protocol (it may need a firmware update, or may be an older model)",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "no_devices_found": "No supported adapters found on the network. Try entering the IP address instead.",
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "Re-configuration was successful",
+      "reconfigure_cloud": "Cloud accounts cannot be reconfigured; remove and add the account again",
+      "wrong_device": "This address belongs to a different unit",
+      "wrong_account": "This login belongs to a different Daikin account",
+      "cannot_connect": "Failed to connect",
+      "invalid_pin": "The lock PIN was rejected",
+      "unsupported_device": "This adapter does not support the DSIOT protocol",
+      "unknown": "Unexpected error"
+    }
+  },
+  "entity": {
+    "climate": {
+      "daikin": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "Auto",
+              "quiet": "Quiet",
+              "1": "Level 1",
+              "2": "Level 2",
+              "3": "Level 3",
+              "4": "Level 4",
+              "5": "Level 5"
+            }
+          },
+          "swing_mode": {
+            "state": {
+              "stop": "Fixed",
+              "swing": "Swing",
+              "auto": "Auto",
+              "natural": "Natural wind",
+              "circulation": "Circulation",
+              "comfort": "Comfort airflow",
+              "position_1": "Position 1",
+              "position_2": "Position 2",
+              "position_3": "Position 3",
+              "position_4": "Position 4",
+              "position_5": "Position 5",
+              "position_6": "Position 6",
+              "position_7": "Position 7",
+              "position_8": "Position 8",
+              "position_9": "Position 9",
+              "position_10": "Position 10",
+              "position_11": "Position 11",
+              "position_12": "Position 12",
+              "position_13": "Position 13",
+              "position_14": "Position 14"
+            }
+          },
+          "swing_horizontal_mode": {
+            "state": {
+              "stop": "Fixed",
+              "swing": "Swing",
+              "auto": "Auto"
+            }
+          },
+          "preset_mode": {
+            "state": {
+              "none": "None",
+              "eco": "Econo",
+              "boost": "Power Chill"
+            }
+          }
+        }
+      }
+    },
+    "binary_sensor": {
+      "filter_sign": {
+        "name": "Filter needs cleaning"
+      },
+      "error": {
+        "name": "Error"
+      }
+    },
+    "number": {
+      "auto_offset": {
+        "name": "Auto mode temperature offset"
+      }
+    },
+    "select": {
+      "led_brightness": {
+        "name": "Display brightness",
+        "state": {
+          "off": "Off",
+          "low": "Low",
+          "high": "High"
+        }
+      }
+    },
+    "sensor": {
+      "room_temperature": {
+        "name": "Room temperature"
+      },
+      "outdoor_temperature": {
+        "name": "Outdoor temperature"
+      },
+      "compressor_frequency": {
+        "name": "Compressor frequency"
+      },
+      "energy_today": {
+        "name": "Energy today"
+      },
+      "runtime_today": {
+        "name": "Runtime today"
+      },
+      "error_code": {
+        "name": "Error code"
+      },
+      "wifi_rssi": {
+        "name": "Wi-Fi signal"
+      }
+    },
+    "switch": {
+      "streamer": {
+        "name": "Streamer"
+      },
+      "outdoor_quiet": {
+        "name": "Outdoor unit quiet"
+      },
+      "dew_clean": {
+        "name": "Dew clean"
+      },
+      "smell_proof": {
+        "name": "Odour prevention"
+      },
+      "good_sleep": {
+        "name": "Good sleep"
+      },
+      "intelligent_eye_energy_saver": {
+        "name": "Intelligent Eye energy saver"
+      },
+      "intelligent_eye_auto_on_off": {
+        "name": "Intelligent Eye auto on/off"
+      }
+    }
+  },
+  "exceptions": {
+    "auth_failed": {
+      "message": "The unit rejected the credentials. Re-authenticate the integration."
+    },
+    "command_failed": {
+      "message": "The command failed: {error}"
+    }
+  }
+}

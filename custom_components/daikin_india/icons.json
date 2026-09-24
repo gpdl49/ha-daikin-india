@@ -1,0 +1,53 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "filter_sign": {
+        "default": "mdi:air-filter"
+      }
+    },
+    "number": {
+      "auto_offset": {
+        "default": "mdi:thermometer-plus"
+      }
+    },
+    "select": {
+      "led_brightness": {
+        "default": "mdi:brightness-6"
+      }
+    },
+    "sensor": {
+      "compressor_frequency": {
+        "default": "mdi:sine-wave"
+      },
+      "runtime_today": {
+        "default": "mdi:timer-outline"
+      },
+      "error_code": {
+        "default": "mdi:alert-circle-outline"
+      }
+    },
+    "switch": {
+      "streamer": {
+        "default": "mdi:air-purifier"
+      },
+      "outdoor_quiet": {
+        "default": "mdi:volume-low"
+      },
+      "dew_clean": {
+        "default": "mdi:water-sync"
+      },
+      "smell_proof": {
+        "default": "mdi:scent"
+      },
+      "good_sleep": {
+        "default": "mdi:sleep"
+      },
+      "intelligent_eye_energy_saver": {
+        "default": "mdi:eye-outline"
+      },
+      "intelligent_eye_auto_on_off": {
+        "default": "mdi:eye-refresh-outline"
+      }
+    }
+  }
+}
