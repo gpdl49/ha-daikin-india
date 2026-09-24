@@ -61,14 +61,52 @@ Go to **Settings → Devices & services → Add integration → Daikin India** a
 
 ## Testing checklist
 
-If you're helping test, please report:
+If you're helping test, please open an issue with your results. Include your AC's model, the adapter firmware (shown on the device page) and a **diagnostics download**. Include one from a local entry and one from a cloud entry if you can. For anything that fails, add debug logs (see Troubleshooting).
 
-1. How you connected (discovery, IP address or cloud) and whether a lock PIN was needed.
-2. Whether the climate card's current state matches the Daikin app.
-3. Power on/off, each mode, temperature changes, fan speeds and swing, and whether the unit responds (it beeps).
-4. Whether the room temperature matches the unit's display.
-5. Econo, Power Chill and any switches your unit shows.
-6. A diagnostics download, from both a local entry and a cloud entry if you can.
+### Setup
+
+- [ ] **Discovery.** Does "Find adapters on my network" find the unit? Include the unit name and IP it shows.
+- [ ] **Manual IP.** Does "Enter adapter IP address" work?
+- [ ] **Lock PIN.** If the unit has a lock password set in the Daikin AC app, does the integration ask for the PIN and accept it? Does a wrong PIN show an error?
+- [ ] **Cloud: password login.** Does logging in with your phone number and password work? Are all your units added?
+- [ ] **Cloud: SMS login.** Does logging in with your phone number and an SMS code work?
+- [ ] **Cloud: phone app session.** After logging in from Home Assistant, is the Daikin AC app on your phone still logged in? (Some Daikin accounts may allow only one session.)
+- [ ] **Cloud: staying logged in.** Leave the cloud entry running for more than 2 hours. Does it keep updating without asking you to log in again?
+
+### Reading state
+
+- [ ] **Current state.** Does the climate card show the same power, mode, set temperature, fan speed and swing as the Daikin AC app?
+- [ ] **Room temperature.** Does it match the unit's display or the app? Note whether it shows half degrees (for example 23.5).
+- [ ] **Humidity.** Does it match the app, if your unit has a humidity sensor?
+- [ ] **Outdoor temperature and compressor frequency.** Do these look plausible? The compressor should read 0 when the unit is idle.
+- [ ] **Energy and runtime.** Compare "Energy today" and "Runtime today" with the app's energy screen. Does energy reset to about 0 after midnight?
+- [ ] **Changes made in the app.** When you change something in the Daikin AC app, does Home Assistant show it within about 20 s (local) or 60 s (cloud)?
+
+### Controls
+
+Check each of these from Home Assistant. Confirm that the unit responds (it beeps) and that the app shows the change.
+
+- [ ] Power on and power off.
+- [ ] **Each mode:** Cool, Heat (if your unit has it), Dry, Fan and Auto.
+- [ ] **Set temperature** in Cool and Heat, including half-degree steps.
+- [ ] **Auto mode.** Does the climate card show a set temperature, or does the "Auto mode temperature offset" slider appear? If the slider appears, does changing it work?
+- [ ] **Fan speed:** Auto, Quiet and levels 1–5. In Dry mode the fan should stay on Auto, as it does in the app.
+- [ ] **Vertical swing:** Swing, Auto and the fixed positions. Do the positions shown match what your unit supports?
+- [ ] **Horizontal swing**, if your unit has it.
+- [ ] **Presets.** Econo and Power Chill. Turning on Power Chill should turn off Econo and outdoor quiet.
+- [ ] **Switches.** Each switch your unit shows (Streamer, Outdoor unit quiet, Dew clean, Odour prevention, Good sleep, Intelligent Eye). Test "Outdoor unit quiet" on its own, without changing anything else at the same time.
+- [ ] **Display brightness**, if shown.
+- [ ] **Local and cloud.** Do controls work the same way from both a local entry and a cloud entry?
+
+### Known unknowns
+
+These parts were inferred from the app's code and haven't been checked on real hardware. Please call them out in your report:
+
+- Which room-temperature value the unit reports: precise (half degrees) or whole degrees.
+- Whether Auto mode uses a relative offset (−2 to +2 °C) or an absolute temperature.
+- Whether writes are accepted as sent. If a control does nothing or shows an error, include the error message and debug logs.
+- Whether any mode shows as unknown. This can happen with Humidify, or while the unit is in Auto mode.
+- The units of the energy figures (Wh per day is assumed).
 
 ## How it works
 
