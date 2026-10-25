@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import uuid
 from collections.abc import Mapping
 from typing import Any
@@ -57,6 +58,19 @@ CONF_ADAPTER = "adapter"
 
 PIN_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
 
+_HOST_RE = re.compile(
+    r"^(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?)(?::(\d{1,5}))?$"
+)
+
+
+def normalize_host(value: str) -> str | None:
+    """Return ``host[:port]`` without a scheme or trailing slash, or None if invalid."""
+    host = value.strip().removeprefix("http://").rstrip("/")
+    match = _HOST_RE.match(host)
+    if not match or (match[2] and not 0 < int(match[2]) < 65536):
+        return None
+    return host
+
 
 class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
     """Set up a Daikin AC locally or through a Daikin India account."""
@@ -101,17 +115,19 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
     async def _async_create_local(
         self, device: RoomAC, host: str, pin: str | None
     ) -> ConfigFlowResult:
-        unique_id = format_mac(device.mac) if device.mac else host
-        await self.async_set_unique_id(unique_id)
         data = {CONF_CONNECTION: CONNECTION_LOCAL, CONF_HOST: host, CONF_PIN: pin or ""}
         if self.source in (SOURCE_REAUTH, SOURCE_RECONFIGURE):
-            self._abort_if_unique_id_mismatch(reason="wrong_device")
             entry = (
                 self._get_reauth_entry()
                 if self.source == SOURCE_REAUTH
                 else self._get_reconfigure_entry()
             )
+            # Without a MAC the unique id is the old address, so it can't be compared.
+            if device.mac:
+                await self.async_set_unique_id(format_mac(device.mac))
+                self._abort_if_unique_id_mismatch(reason="wrong_device")
             return self.async_update_reload_and_abort(entry, data_updates=data)
+        await self.async_set_unique_id(format_mac(device.mac) if device.mac else host)
         self._abort_if_unique_id_configured(updates={CONF_HOST: host})
         return self.async_create_entry(
             title=device.name or device.model or f"Daikin {host}", data=data
@@ -121,11 +137,13 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
         """Enter an adapter address manually."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            host = user_input[CONF_HOST].strip()
             pin = user_input.get(CONF_PIN) or None
-            device, errors = await self._async_local_errors(host, pin)
-            if device:
-                return await self._async_create_local(device, host, pin)
+            if (host := normalize_host(user_input[CONF_HOST])) is None:
+                errors["base"] = "invalid_host"
+            else:
+                device, errors = await self._async_local_errors(host, pin)
+                if device:
+                    return await self._async_create_local(device, host, pin)
         return self.async_show_form(
             step_id="local",
             data_schema=self.add_suggested_values_to_schema(
@@ -201,11 +219,13 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="reconfigure_cloud")
         errors: dict[str, str] = {}
         if user_input is not None:
-            host = user_input[CONF_HOST].strip()
             pin = user_input.get(CONF_PIN) or None
-            device, errors = await self._async_local_errors(host, pin)
-            if device:
-                return await self._async_create_local(device, host, pin)
+            if (host := normalize_host(user_input[CONF_HOST])) is None:
+                errors["base"] = "invalid_host"
+            else:
+                device, errors = await self._async_local_errors(host, pin)
+                if device:
+                    return await self._async_create_local(device, host, pin)
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=self.add_suggested_values_to_schema(
@@ -339,7 +359,8 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_mismatch(reason="wrong_account")
             return self.async_update_reload_and_abort(self._get_reauth_entry(), data_updates=data)
         self._abort_if_unique_id_configured()
-        return self.async_create_entry(title=f"Daikin account {phone}", data=data)
+        # Only the last digits, so the number doesn't end up in logs that mention the title.
+        return self.async_create_entry(title=f"Daikin account …{phone[-4:]}", data=data)
 
     def _reauth_phone(self) -> str | None:
         if self.source == SOURCE_REAUTH:
@@ -351,11 +372,17 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
         """Handle rejected credentials."""
         if entry_data.get(CONF_CONNECTION) == CONNECTION_CLOUD:
-            return self.async_show_menu(
-                step_id="reauth_cloud", menu_options=["cloud_password", "cloud_otp"]
-            )
+            return await self.async_step_reauth_cloud()
         self._host = entry_data[CONF_HOST]
         return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_cloud(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Log in to the Daikin account again."""
+        return self.async_show_menu(
+            step_id="reauth_cloud", menu_options=["cloud_password", "cloud_otp"]
+        )
 
     async def async_step_reauth_confirm(
         self, user_input: dict[str, Any] | None = None

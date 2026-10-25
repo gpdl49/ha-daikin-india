@@ -46,6 +46,14 @@ Go to **Settings → Devices & services → Add integration → Daikin India** a
 
 **Polling.** Local units are polled every 20 s and cloud units every 60 s. A change you make shows immediately and is confirmed on the next poll.
 
+## Privacy and security
+
+- **What is stored.** Home Assistant keeps the config entry in `.storage/core.config_entries`. For a local unit that is the adapter address and lock PIN. For a cloud account it is the phone number, a random per-installation ID and the session tokens. Your Daikin password and SMS codes are never stored; they are only used to log in.
+- **Local traffic is unencrypted.** The adapter only speaks plain HTTP on your LAN, and the lock PIN is sent with every request, as the Daikin AC app does. Keep the ACs on a network you trust.
+- **Cloud traffic** goes over HTTPS (with certificate verification) to Daikin's servers at `daikinacmanager.com`.
+- **Bundled app values.** `dsiot/const.py` contains the OAuth `client_id` and `client_secret`, and `dsiot/cloud_auth.py` the RSA public key, that the Daikin AC Android app uses to log in. They were extracted from the publicly distributed app, are the same for every user of the app, and identify the app rather than you. They are not credentials for your account.
+- **Diagnostics** redact the PIN, phone number, tokens, installation ID, address, MAC, SSID, edge IDs and unit names.
+
 ## Troubleshooting
 
 - **"This adapter does not support the DSIOT protocol".** The adapter's firmware predates DSIOT. Update the adapter from the Daikin AC app and try again.
