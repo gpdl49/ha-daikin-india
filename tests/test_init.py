@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import time
+from datetime import timedelta
+
 from homeassistant.components.climate import (
     ATTR_FAN_MODE,
     ATTR_HVAC_MODE,
@@ -19,7 +22,8 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_TEMPERATURE, CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from homeassistant.util import dt as dt_util
+from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.daikin_india.const import (
     CONF_CONNECTION,
@@ -27,6 +31,8 @@ from custom_components.daikin_india.const import (
     CONNECTION_LOCAL,
     DOMAIN,
 )
+from custom_components.daikin_india.coordinator import CLOUD_CONFIRM_DELAY, DaikinCoordinator
+from custom_components.daikin_india.dsiot import LocalTransport, RoomAC
 from custom_components.daikin_india.dsiot.codec import flatten
 from custom_components.daikin_india.dsiot.errors import AuthError, CommunicationError
 
@@ -131,3 +137,46 @@ async def test_bad_pin_starts_reauth(hass: HomeAssistant, fake_transport) -> Non
     assert entry.state is ConfigEntryState.SETUP_ERROR
     flows = hass.config_entries.flow.async_progress()
     assert any(f["context"]["source"] == "reauth" for f in flows)
+
+
+async def test_write_not_reverted_by_stale_poll(hass: HomeAssistant, fake_transport) -> None:
+    """The unit (the fixture) never applies the write, like a lagging cloud copy."""
+    entry = await _setup(hass)
+    coordinator = entry.runtime_data.coordinators[0]
+    reads = fake_transport.reads
+
+    await hass.services.async_call(
+        CLIMATE_DOMAIN,
+        SERVICE_SET_HVAC_MODE,
+        {ATTR_ENTITY_ID: CLIMATE, ATTR_HVAC_MODE: HVACMode.OFF},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+    assert fake_transport.reads == reads + 1  # immediate confirming poll (local)
+    assert hass.states.get(CLIMATE).state == HVACMode.OFF
+
+    # Once the hold expires the follow-up poll shows what the unit reports.
+    later = coordinator.device.write_hold + 2
+    start = time.monotonic()
+    coordinator.device._clock = lambda: start + later
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=later))
+    await hass.async_block_till_done()
+    assert fake_transport.reads == reads + 2
+    assert hass.states.get(CLIMATE).state == HVACMode.COOL
+
+    assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_cloud_confirm_is_delayed(hass: HomeAssistant, fake_transport) -> None:
+    entry = MockConfigEntry(domain=DOMAIN, data={})
+    entry.add_to_hass(hass)
+    device = RoomAC(LocalTransport(None, "192.0.2.10"))  # type: ignore[arg-type]
+    coordinator = DaikinCoordinator(hass, entry, device, "edge-1", timedelta(minutes=10), True)
+
+    await coordinator.async_after_write()
+    assert fake_transport.reads == 0
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=CLOUD_CONFIRM_DELAY + 1))
+    await hass.async_block_till_done()
+    assert fake_transport.reads == 1
+
+    await coordinator.async_shutdown()
