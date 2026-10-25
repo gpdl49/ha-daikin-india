@@ -18,6 +18,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.device_registry import format_mac
 from homeassistant.helpers.selector import (
+    BooleanSelector,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -54,6 +55,7 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_OTP = "otp"
 CONF_ADAPTER = "adapter"
+CONF_STORE_PASSWORD = "store_password"
 
 PIN_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
 
@@ -252,7 +254,10 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
             except CommunicationError:
                 errors["base"] = "cannot_connect"
             else:
-                return await self._async_create_cloud(phone, tokens)
+                password = (
+                    user_input[CONF_PASSWORD] if user_input.get(CONF_STORE_PASSWORD) else None
+                )
+                return await self._async_create_cloud(phone, tokens, password)
         return self.async_show_form(
             step_id="cloud_password",
             data_schema=self.add_suggested_values_to_schema(
@@ -264,6 +269,7 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
                         vol.Required(CONF_PASSWORD): TextSelector(
                             TextSelectorConfig(type=TextSelectorType.PASSWORD)
                         ),
+                        vol.Optional(CONF_STORE_PASSWORD, default=True): BooleanSelector(),
                     }
                 ),
                 {CONF_PHONE: self._reauth_phone() or "+91"},
@@ -326,7 +332,9 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _async_create_cloud(self, phone: str, tokens: Tokens) -> ConfigFlowResult:
+    async def _async_create_cloud(
+        self, phone: str, tokens: Tokens, password: str | None = None
+    ) -> ConfigFlowResult:
         await self.async_set_unique_id(f"cloud_{tokens.uid or phone}")
         assert self._auth is not None
         data = {
@@ -335,9 +343,13 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
             CONF_INSTALL_UUID: self._auth.install_uuid,
             CONF_TOKENS: tokens.as_dict(),
         }
+        if password:
+            # Lets the integration log in again if Daikin rejects the refresh token.
+            data[CONF_PASSWORD] = password
         if self.source == SOURCE_REAUTH:
             self._abort_if_unique_id_mismatch(reason="wrong_account")
-            return self.async_update_reload_and_abort(self._get_reauth_entry(), data_updates=data)
+            # Replace the data so a stale stored password doesn't survive a reauth.
+            return self.async_update_reload_and_abort(self._get_reauth_entry(), data=data)
         self._abort_if_unique_id_configured()
         return self.async_create_entry(title=f"Daikin account {phone}", data=data)
 
@@ -351,11 +363,17 @@ class DaikinIndiaConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
         """Handle rejected credentials."""
         if entry_data.get(CONF_CONNECTION) == CONNECTION_CLOUD:
-            return self.async_show_menu(
-                step_id="reauth_cloud", menu_options=["cloud_password", "cloud_otp"]
-            )
+            return await self.async_step_reauth_cloud()
         self._host = entry_data[CONF_HOST]
         return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_cloud(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose how to log in to the Daikin account again."""
+        return self.async_show_menu(
+            step_id="reauth_cloud", menu_options=["cloud_password", "cloud_otp"]
+        )
 
     async def async_step_reauth_confirm(
         self, user_input: dict[str, Any] | None = None

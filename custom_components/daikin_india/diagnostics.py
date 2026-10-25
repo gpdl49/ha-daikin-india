@@ -5,12 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
+from homeassistant.const import CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 
 from .const import CONF_INSTALL_UUID, CONF_PHONE, CONF_PIN, CONF_TOKENS
 from .coordinator import DaikinConfigEntry
 
 TO_REDACT = {
+    CONF_PASSWORD,
     CONF_PIN,
     CONF_PHONE,
     CONF_TOKENS,

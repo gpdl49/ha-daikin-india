@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.const import CONF_HOST, Platform
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -14,6 +14,7 @@ from .const import (
     CLOUD_SCAN_INTERVAL,
     CONF_CONNECTION,
     CONF_INSTALL_UUID,
+    CONF_PHONE,
     CONF_PIN,
     CONF_TOKENS,
     CONNECTION_CLOUD,
@@ -76,11 +77,13 @@ async def _async_setup_cloud(hass: HomeAssistant, entry: DaikinConfigEntry) -> D
         )
 
     session = async_get_clientsession(hass)
+    password = entry.data.get(CONF_PASSWORD)
     auth = CloudAuth(
         session,
         entry.data[CONF_INSTALL_UUID],
         Tokens.from_dict(entry.data[CONF_TOKENS]),
         on_tokens_updated=_save_tokens,
+        credentials=(entry.data[CONF_PHONE], password) if password else None,
     )
     transport = CloudTransport(session, auth)
     try:
