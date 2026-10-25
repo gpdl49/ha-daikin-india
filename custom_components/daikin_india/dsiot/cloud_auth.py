@@ -152,13 +152,16 @@ class CloudAuth:
         install_uuid: str,
         tokens: Tokens | None = None,
         on_tokens_updated: Callable[[Tokens], None] | None = None,
+        credentials: tuple[str, str] | None = None,
     ) -> None:
         self._session = session
         self._install_uuid = install_uuid
         self.tokens = tokens
         self._on_tokens_updated = on_tokens_updated
+        # (phone, password) for a silent re-login when the refresh token is rejected.
+        self._credentials = credentials
         self._refresh_lock = asyncio.Lock()
-        self._last_refresh = 0.0
+        self._last_refresh: float | None = None
 
     @property
     def install_uuid(self) -> str:
@@ -217,26 +220,53 @@ class CloudAuth:
         return self.tokens.id_token
 
     async def async_refresh(self) -> None:
-        """Refresh the session using the stored refresh tokens."""
+        """Refresh the session, logging in again with stored credentials if that fails."""
         async with self._refresh_lock:
             if self.tokens is None:
                 raise AuthError("Not logged in")
             # Another caller may have refreshed while we waited for the lock.
-            if time.monotonic() - self._last_refresh < 60 and not self.tokens.needs_refresh:
+            if (
+                self._last_refresh is not None
+                and time.monotonic() - self._last_refresh < 60
+                and not self.tokens.needs_refresh
+            ):
                 return
-            body = {
-                "grant_type": "refresh_token",
-                "refresh_token": self.tokens.refresh_token,
-                "cd_refreshToken": self.tokens.cd_refresh_token,
-                "cd_user_uuid": self.tokens.cd_user_uuid,
-            }
-            data = await self._post(
-                f"https://{CLOUD_HOST}/premise/dsiot/cognito/token",
-                json=body,
-                headers={"Authorization": f"Bearer {self.tokens.id_token}"},
+            _LOGGER.debug(
+                "Refreshing cloud session (id token expires in %.0f s)",
+                self.tokens.expires_at - time.time(),
             )
-            self._set_tokens(Tokens.from_response(data, previous=self.tokens))
+            try:
+                await self._refresh()
+            except AuthError as err:
+                if self._credentials is None:
+                    raise AuthError(
+                        f"Daikin rejected the saved session ({err}); log in again"
+                    ) from err
+                _LOGGER.info("Session refresh rejected (%s); logging in again", err)
+                await self.async_login_password(*self._credentials)
             self._last_refresh = time.monotonic()
+
+    async def _refresh(self) -> None:
+        assert self.tokens is not None
+        body = {
+            "grant_type": "refresh_token",
+            "refresh_token": self.tokens.refresh_token,
+            "cd_refreshToken": self.tokens.cd_refresh_token,
+            "cd_user_uuid": self.tokens.cd_user_uuid,
+        }
+        # The app sends the current (usually already expired) id token here too.
+        data = await self._post(
+            f"https://{CLOUD_HOST}/premise/dsiot/cognito/token",
+            json=body,
+            headers={"Authorization": f"Bearer {self.tokens.id_token}"},
+        )
+        tokens = Tokens.from_response(data, previous=self.tokens)
+        _LOGGER.debug(
+            "Session refreshed; rotated: refresh_token=%s cd_refreshToken=%s",
+            tokens.refresh_token != self.tokens.refresh_token,
+            tokens.cd_refresh_token != self.tokens.cd_refresh_token,
+        )
+        self._set_tokens(tokens)
 
     async def async_logout(self) -> None:
         """Invalidate the refresh token on the server (best effort)."""
@@ -278,6 +308,7 @@ class CloudAuth:
         except ValueError:
             body = {}
         if status in (400, 401, 403):
+            _LOGGER.debug("HTTP %s from %s: %s", status, url, _error_message(body))
             raise AuthError(_error_message(body) or f"HTTP {status}")
         if status >= 400:
             raise CommunicationError(f"HTTP {status} from {url}")

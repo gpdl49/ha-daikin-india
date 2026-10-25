@@ -31,8 +31,8 @@ from custom_components.daikin_india.const import (
     CONNECTION_LOCAL,
     DOMAIN,
 )
-from custom_components.daikin_india.diagnostics import async_get_config_entry_diagnostics
 from custom_components.daikin_india.coordinator import CLOUD_CONFIRM_DELAY, DaikinCoordinator
+from custom_components.daikin_india.diagnostics import async_get_config_entry_diagnostics
 from custom_components.daikin_india.dsiot import LocalTransport, RoomAC
 from custom_components.daikin_india.dsiot.codec import flatten
 from custom_components.daikin_india.dsiot.errors import AuthError, CommunicationError
