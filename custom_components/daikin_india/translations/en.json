@@ -61,7 +61,7 @@
       },
       "reauth_cloud": {
         "title": "Daikin account session expired",
-        "description": "Log in again to keep controlling your units through the cloud.",
+        "description": "Daikin rejected the saved session. The session may have expired or been signed out elsewhere. Log in again to keep controlling your units through the cloud; choose \"Stay signed in\" to have this handled automatically next time.",
         "menu_options": {
           "cloud_password": "Phone number and password",
           "cloud_otp": "Phone number and SMS code"
@@ -71,10 +71,12 @@
         "title": "Daikin account",
         "data": {
           "phone": "Phone number",
-          "password": "Password"
+          "password": "Password",
+          "store_password": "Stay signed in"
         },
         "data_description": {
-          "phone": "The mobile number registered in the Daikin AC app, with country code (for example +919876543210)."
+          "phone": "The mobile number registered in the Daikin AC app, with country code (for example +919876543210).",
+          "store_password": "Store the password so the integration can log in again by itself if Daikin ends the session. Without it, you will be asked to log in again."
         }
       },
       "cloud_otp": {
