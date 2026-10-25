@@ -61,7 +61,10 @@ async def test_password_login(hass: HomeAssistant, aioclient_mock: AiohttpClient
     aioclient_mock.post(LOGIN, json=LOGIN_RESPONSE)
     saved: list[Tokens] = []
     auth = CloudAuth(async_get_clientsession(hass), "uuid-1", on_tokens_updated=saved.append)
-    tokens = await auth.async_login_password("+919876543210", "pw")
+    # The password contains characters outside the base64 alphabet so it can
+    # never appear by chance inside the base64-encoded RSA ciphertext.
+    password = "not-in-b64!"
+    tokens = await auth.async_login_password("+919876543210", password)
     assert tokens.id_token == "id-1"
     assert tokens.cd_access_token == "cda"
     assert saved == [tokens]
@@ -70,7 +73,7 @@ async def test_password_login(hass: HomeAssistant, aioclient_mock: AiohttpClient
     assert body["auth_type"] == "PASS"
     assert body["uuid"] == "uuid-1"
     assert len(base64.b64decode(body["code"])) == 512
-    assert "pw" not in str(body)
+    assert password not in str(body)
 
 
 async def test_login_rejected(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:
