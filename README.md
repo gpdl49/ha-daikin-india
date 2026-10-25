@@ -46,6 +46,23 @@ Go to **Settings → Devices & services → Add integration → Daikin India** a
 
 **Polling.** Local units are polled every 20 s and cloud units every 60 s. A change you make shows immediately and is confirmed on the next poll.
 
+## Dashboard card
+
+Home Assistant's built-in area pages show only the temperature buttons on a climate tile, so turning the AC on takes an extra tap. The integration can't change that, but on your own dashboard you can add a tile with mode buttons. Tapping the icon then turns the AC on or off:
+
+```yaml
+type: tile
+entity: climate.bedroom_ac  # your AC's entity ID
+icon_tap_action:
+  action: toggle
+features:
+  - type: climate-hvac-modes
+    hvac_modes: [cool, dry, fan_only, auto, "off"]
+  - type: target-temperature
+```
+
+Add `climate-fan-modes`, `climate-swing-modes` or `climate-preset-modes` to the `features` list for fan speed, swing or Econo/Power Chill.
+
 ## Privacy and security
 
 - **What is stored.** Home Assistant keeps the config entry in `.storage/core.config_entries`. For a local unit that is the adapter address and lock PIN. For a cloud account it is the phone number, a random per-installation ID and the session tokens. If you log in with a password and leave **Stay signed in** ticked, the password is stored too, so the integration can log in again by itself when Daikin ends the session. It is redacted from diagnostics. Untick it, or use SMS login, to keep the password out of storage; you will then be asked to log in again whenever the session ends. SMS codes are never stored.
