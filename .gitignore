@@ -12,3 +12,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+
+# Local tooling / scratch media
+.claude/
+*.mp4
