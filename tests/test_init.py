@@ -27,6 +27,7 @@ from custom_components.daikin_india.const import (
     CONNECTION_LOCAL,
     DOMAIN,
 )
+from custom_components.daikin_india.diagnostics import async_get_config_entry_diagnostics
 from custom_components.daikin_india.dsiot.codec import flatten
 from custom_components.daikin_india.dsiot.errors import AuthError, CommunicationError
 
@@ -131,3 +132,13 @@ async def test_bad_pin_starts_reauth(hass: HomeAssistant, fake_transport) -> Non
     assert entry.state is ConfigEntryState.SETUP_ERROR
     flows = hass.config_entries.flow.async_progress()
     assert any(f["context"]["source"] == "reauth" for f in flows)
+
+
+async def test_diagnostics_redacts(hass: HomeAssistant, fake_transport) -> None:
+    entry = await _setup(hass)
+    entry.runtime_data.coordinators[0].device.values["adp_d.group.name"] = "Home"
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+    text = str(diag)
+    for secret in ("192.0.2.10", "AABBCCDDEEFF", "Bedroom", "Home'"):
+        assert secret not in text
+    assert diag["entry"][CONF_HOST] == "**REDACTED**"
