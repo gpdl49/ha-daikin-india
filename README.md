@@ -1,13 +1,21 @@
 # Daikin India for Home Assistant
 
-A Home Assistant integration for Daikin air conditioners sold in India. These units are normally controlled with the **Daikin AC** app (`in.co.daikin.remoapp`).
+A Home Assistant integration for Daikin air conditioners sold in India. These units are normally controlled with the **GO DAIKIN** app for India (`in.co.daikin.remoapp`).
 
 - **Local control.** It talks directly to the unit's Wi-Fi adapter on your network over the adapter's HTTP API (called "DSIOT"). No cloud connection or account is needed.
-- **Cloud control (optional).** It can also log in to your Daikin AC app account and control the units through Daikin's servers.
+- **Cloud control (optional).** It can also log in to your GO DAIKIN app account and control the units through Daikin's servers.
 
-> **Status: early testing (v0.2).** The protocol was worked out by observing how the Daikin AC app talks to the adapter and has not yet been confirmed against every unit. Please report what works and what doesn't. Diagnostics downloads help a lot (see below).
+> **Status: early testing (v0.2).** The protocol was worked out by observing how the GO DAIKIN app talks to the adapter and has not yet been confirmed against every unit. Please report what works and what doesn't. Diagnostics downloads help a lot (see below).
 
 This project is not affiliated with or endorsed by Daikin.
+
+### How is this different from the GO DAIKIN integration?
+
+The [GO DAIKIN integration](https://github.com/doubleukay/godaikin-ha) (`godaikin`) works with the GO DAIKIN cloud used in Malaysia and Southeast Asia, where you log in with an email address. Indian units use a different Daikin cloud and log in with a phone number, so that integration doesn't work with them. This integration is for Indian units, and adds:
+
+- **Local control.** It talks to the AC over your network, with no account or internet needed, and keeps working when Daikin's servers are down.
+- **India-specific features.** Streamer, Good Sleep, Dew Clean, odour prevention, Intelligent Eye and outdoor-unit quiet, where your unit has them.
+- **Unit-reported capabilities.** Modes, fan speeds, airflow patterns and louver positions come from the unit itself.
 
 ## Features
 
@@ -26,6 +34,10 @@ An entity is only created if your unit reports that feature. Options such as the
 
 ### HACS (recommended)
 
+[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=gpdl49&repository=ha-daikin-india&category=integration)
+
+Or add it by hand:
+
 1. In HACS, open the menu (⋮) and choose **Custom repositories**.
 2. Add `https://github.com/gpdl49/ha-daikin-india` with type **Integration**.
 3. Install **Daikin India**, then restart Home Assistant.
@@ -40,9 +52,9 @@ Go to **Settings → Devices & services → Add integration → Daikin India** a
 
 - **Find adapters on my network.** A UDP broadcast looks for adapters on your network. Home Assistant must be on the same network or VLAN as the ACs.
 - **Enter adapter IP address.** Use this when discovery doesn't work (for example across VLANs). A DHCP reservation for the AC is recommended.
-- **Daikin AC app account (cloud).** Log in with your registered phone number and either your password or an SMS code. Every unit on the account is added. Units you have already added locally are skipped.
+- **GO DAIKIN app account (cloud).** Log in with your registered phone number and either your password or an SMS code. Every unit on the account is added. Units you have already added locally are skipped.
 
-**Lock PIN.** If a lock password is set on the unit in the Daikin AC app, the integration asks for that 4-digit PIN. If you change it later, Home Assistant prompts you to re-authenticate.
+**Lock PIN.** If a lock password is set on the unit in the GO DAIKIN app, the integration asks for that 4-digit PIN. If you change it later, Home Assistant prompts you to re-authenticate.
 
 **Polling.** Local units are polled every 20 s and cloud units every 60 s. A change you make shows immediately and is confirmed on the next poll.
 
@@ -66,15 +78,15 @@ Add `climate-fan-modes`, `climate-swing-modes` or `climate-preset-modes` to the 
 ## Privacy and security
 
 - **What is stored.** Home Assistant keeps the config entry in `.storage/core.config_entries`. For a local unit that is the adapter address and lock PIN. For a cloud account it is the phone number, a random per-installation ID and the session tokens. If you log in with a password and leave **Stay signed in** ticked, the password is stored too, so the integration can log in again by itself when Daikin ends the session. It is redacted from diagnostics. Untick it, or use SMS login, to keep the password out of storage; you will then be asked to log in again whenever the session ends. SMS codes are never stored.
-- **Local traffic is unencrypted.** The adapter only speaks plain HTTP on your LAN, and the lock PIN is sent with every request, as the Daikin AC app does. Keep the ACs on a network you trust.
+- **Local traffic is unencrypted.** The adapter only speaks plain HTTP on your LAN, and the lock PIN is sent with every request, as the GO DAIKIN app does. Keep the ACs on a network you trust.
 - **Cloud traffic** goes over HTTPS (with certificate verification) to Daikin's servers at `daikinacmanager.com`.
 - **Bundled app values.** `dsiot/const.py` contains the OAuth `client_id` and `client_secret`, and `dsiot/cloud_auth.py` the RSA public key, that the Daikin AC Android app uses to log in. They were extracted from the publicly distributed app, are the same for every user of the app, and identify the app rather than you. They are not credentials for your account.
 - **Diagnostics** redact the PIN, phone number, tokens, installation ID, address, MAC, SSID, edge IDs and unit names.
 
 ## Troubleshooting
 
-- **"This adapter does not support the DSIOT protocol".** The adapter's firmware predates DSIOT. Update the adapter from the Daikin AC app and try again.
-- **Cloud account asks you to log in again (`invalid_grant`).** Daikin ended the saved session, for example after a long outage or a sign-in elsewhere. With **Stay signed in** ticked, the integration logs in again by itself; otherwise open the repair prompt and log in. If it keeps happening, check whether another integration (such as GO DAIKIN) or script uses the same Daikin account: Daikin appears to allow one session per account, so they sign each other out. Disable the other one, or open an issue with debug logs.
+- **"This adapter does not support the DSIOT protocol".** The adapter's firmware predates DSIOT. Update the adapter from the GO DAIKIN app and try again.
+- **Cloud account asks you to log in again (`invalid_grant`).** Daikin ended the saved session, for example after a long outage or a sign-in elsewhere. With **Stay signed in** ticked, the integration logs in again by itself; otherwise open the repair prompt and log in. If it keeps happening, please open an issue with debug logs.
 - **A change takes a few seconds to show.** Cloud units relay state with a delay. The integration shows your change straight away and confirms it with the unit a few seconds later.
 - **Discovery finds nothing.** Enter the IP address instead. You can find it in your router's DHCP client list.
 - **Something looks wrong.** Open the device page, choose **Download diagnostics**, and attach the file to an issue. The file contains the raw values the unit reports; personal identifiers (MAC, names, tokens, phone number) are redacted.
@@ -94,20 +106,20 @@ If you're helping test, please open an issue with your results. Include your AC'
 
 - [ ] **Discovery.** Does "Find adapters on my network" find the unit? Include the unit name and IP it shows.
 - [ ] **Manual IP.** Does "Enter adapter IP address" work?
-- [ ] **Lock PIN.** If the unit has a lock password set in the Daikin AC app, does the integration ask for the PIN and accept it? Does a wrong PIN show an error?
+- [ ] **Lock PIN.** If the unit has a lock password set in the GO DAIKIN app, does the integration ask for the PIN and accept it? Does a wrong PIN show an error?
 - [ ] **Cloud: password login.** Does logging in with your phone number and password work? Are all your units added?
 - [ ] **Cloud: SMS login.** Does logging in with your phone number and an SMS code work?
-- [ ] **Cloud: phone app session.** After logging in from Home Assistant, is the Daikin AC app on your phone still logged in? (Some Daikin accounts may allow only one session.)
+- [ ] **Cloud: phone app session.** After logging in from Home Assistant, is the GO DAIKIN app on your phone still logged in? (Some Daikin accounts may allow only one session.)
 - [ ] **Cloud: staying logged in.** Leave the cloud entry running for more than 2 hours. Does it keep updating without asking you to log in again?
 
 ### Reading state
 
-- [ ] **Current state.** Does the climate card show the same power, mode, set temperature, fan speed and swing as the Daikin AC app?
+- [ ] **Current state.** Does the climate card show the same power, mode, set temperature, fan speed and swing as the GO DAIKIN app?
 - [ ] **Room temperature.** Does it match the unit's display or the app? Note whether it shows half degrees (for example 23.5).
 - [ ] **Humidity.** Does it match the app, if your unit has a humidity sensor?
 - [ ] **Outdoor temperature and compressor frequency.** Do these look plausible? The compressor should read 0 when the unit is idle.
 - [ ] **Energy and runtime.** Compare "Energy today" and "Runtime today" with the app's energy screen. Does energy reset to about 0 after midnight?
-- [ ] **Changes made in the app.** When you change something in the Daikin AC app, does Home Assistant show it within about 20 s (local) or 60 s (cloud)?
+- [ ] **Changes made in the app.** When you change something in the GO DAIKIN app, does Home Assistant show it within about 20 s (local) or 60 s (cloud)?
 
 ### Controls
 
@@ -137,7 +149,7 @@ These parts were inferred from the app's code and haven't been checked on real h
 
 ## How it works
 
-The Daikin AC app and the adapter both use DSIOT, a JSON protocol served at `/dsiot/multireq`. The cloud relays the same requests to the adapter, so the integration uses one code path for local and cloud control. The details are in:
+The GO DAIKIN app and the adapter both use DSIOT, a JSON protocol served at `/dsiot/multireq`. The cloud relays the same requests to the adapter, so the integration uses one code path for local and cloud control. The details are in:
 
 - [docs/architecture.md](docs/architecture.md): the integration's design
 - [docs/prior-art.md](docs/prior-art.md): comparison with other Daikin integrations

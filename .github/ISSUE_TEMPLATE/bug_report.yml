@@ -13,14 +13,14 @@ body:
     id: connection
     attributes:
       label: Connection
-      options: [Local, Cloud (Daikin AC app account), Both]
+      options: [Local, Cloud (GO DAIKIN app account), Both]
     validations:
       required: true
   - type: input
     id: model
     attributes:
       label: AC model and adapter firmware
-      description: From the device page in Home Assistant or the Daikin AC app.
+      description: From the device page in Home Assistant or the GO DAIKIN app.
   - type: input
     id: versions
     attributes:

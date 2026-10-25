@@ -6,6 +6,6 @@ body:
     id: what
     attributes:
       label: What would you like?
-      description: Include the AC model and how the feature appears in the Daikin AC app, if relevant.
+      description: Include the AC model and how the feature appears in the GO DAIKIN app, if relevant.
     validations:
       required: true

@@ -7,7 +7,7 @@
         "menu_options": {
           "discover": "Find adapters on my network",
           "local": "Enter adapter IP address",
-          "cloud": "Daikin AC app account (cloud)"
+          "cloud": "GO DAIKIN app account (cloud)"
         }
       },
       "local": {
@@ -18,7 +18,7 @@
         },
         "data_description": {
           "host": "IP address or hostname of the air conditioner's Wi-Fi adapter.",
-          "pin": "Only needed if a lock password is set on the unit in the Daikin AC app."
+          "pin": "Only needed if a lock password is set on the unit in the GO DAIKIN app."
         }
       },
       "discover": {
@@ -29,7 +29,7 @@
       },
       "pin": {
         "title": "Lock PIN required",
-        "description": "The adapter at {host} is locked. Enter the 4-digit lock PIN set in the Daikin AC app.",
+        "description": "The adapter at {host} is locked. Enter the 4-digit lock PIN set in the GO DAIKIN app.",
         "data": {
           "pin": "Lock PIN"
         }
@@ -75,7 +75,7 @@
           "store_password": "Stay signed in"
         },
         "data_description": {
-          "phone": "The mobile number registered in the Daikin AC app, with country code (for example +919876543210).",
+          "phone": "The mobile number registered in the GO DAIKIN app, with country code (for example +919876543210).",
           "store_password": "Store the password so the integration can log in again by itself if Daikin ends the session. Without it, you will be asked to log in again."
         }
       },
@@ -86,7 +86,7 @@
           "phone": "Phone number"
         },
         "data_description": {
-          "phone": "The mobile number registered in the Daikin AC app, with country code (for example +919876543210)."
+          "phone": "The mobile number registered in the GO DAIKIN app, with country code (for example +919876543210)."
         }
       },
       "cloud_otp_verify": {
