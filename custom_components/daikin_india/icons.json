@@ -1,5 +1,50 @@
 {
   "entity": {
+    "climate": {
+      "daikin": {
+        "state_attributes": {
+          "preset_mode": {
+            "default": "mdi:circle-medium",
+            "state": {
+              "none": "mdi:circle-medium",
+              "eco": "mdi:leaf",
+              "boost": "mdi:rocket-launch"
+            }
+          },
+          "fan_mode": {
+            "default": "mdi:fan",
+            "state": {
+              "auto": "mdi:fan-auto",
+              "quiet": "mdi:fan-minus",
+              "1": "mdi:fan-speed-1",
+              "2": "mdi:fan-speed-1",
+              "3": "mdi:fan-speed-2",
+              "4": "mdi:fan-speed-3",
+              "5": "mdi:fan-speed-3"
+            }
+          },
+          "swing_mode": {
+            "default": "mdi:arrow-oscillating",
+            "state": {
+              "stop": "mdi:arrow-oscillating-off",
+              "swing": "mdi:arrow-up-down",
+              "auto": "mdi:arrow-oscillating",
+              "natural": "mdi:weather-windy",
+              "circulation": "mdi:autorenew",
+              "comfort": "mdi:weather-windy-variant"
+            }
+          },
+          "swing_horizontal_mode": {
+            "default": "mdi:arrow-oscillating",
+            "state": {
+              "stop": "mdi:arrow-oscillating-off",
+              "swing": "mdi:arrow-left-right",
+              "auto": "mdi:arrow-oscillating"
+            }
+          }
+        }
+      }
+    },
     "binary_sensor": {
       "filter_sign": {
         "default": "mdi:air-filter"
@@ -13,6 +58,9 @@
     "select": {
       "led_brightness": {
         "default": "mdi:brightness-6"
+      },
+      "vertical_vane_position": {
+        "default": "mdi:arrow-up-down"
       }
     },
     "sensor": {
@@ -28,10 +76,16 @@
     },
     "switch": {
       "streamer": {
-        "default": "mdi:air-purifier"
+        "default": "mdi:air-purifier",
+        "state": {
+          "off": "mdi:air-purifier-off"
+        }
       },
       "outdoor_quiet": {
-        "default": "mdi:volume-low"
+        "default": "mdi:volume-high",
+        "state": {
+          "on": "mdi:volume-low"
+        }
       },
       "dew_clean": {
         "default": "mdi:water-sync"
@@ -40,13 +94,22 @@
         "default": "mdi:scent"
       },
       "good_sleep": {
-        "default": "mdi:sleep"
+        "default": "mdi:sleep",
+        "state": {
+          "off": "mdi:sleep-off"
+        }
       },
       "intelligent_eye_energy_saver": {
-        "default": "mdi:eye-outline"
+        "default": "mdi:eye-outline",
+        "state": {
+          "off": "mdi:eye-off-outline"
+        }
       },
       "intelligent_eye_auto_on_off": {
-        "default": "mdi:eye-refresh-outline"
+        "default": "mdi:eye-refresh-outline",
+        "state": {
+          "off": "mdi:eye-off-outline"
+        }
       }
     }
   }

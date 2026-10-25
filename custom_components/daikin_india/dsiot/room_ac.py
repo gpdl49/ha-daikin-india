@@ -331,37 +331,55 @@ class RoomAC:
         keys = self.keys_for(mode)
         return keys is not None and keys.fan in self.values
 
-    def swing_options(self, horizontal: bool, mode: Mode | None = None) -> list[str]:
-        """Air-direction options for a mode, from the ``md.mx`` bitmask."""
+    def _swing_key(self, horizontal: bool, mode: Mode | None = None) -> str | None:
         keys = self.keys_for(mode)
         if not keys:
-            return []
+            return None
         key = keys.swing_h if horizontal else keys.swing_v
-        if key not in self.values:
+        return key if key in self.values else None
+
+    def _swing_mask(self, key: str) -> int:
+        return md_int(self.meta.get(key), "mx") or 0
+
+    def swing_options(self, horizontal: bool, mode: Mode | None = None) -> list[str]:
+        """Airflow patterns for a mode, from the ``md.mx`` bitmask.
+
+        ``stop`` (fixed) is always offered; fixed vertical positions are listed
+        by ``vane_positions``. Without usable metadata, offer stop and swing.
+        """
+        key = self._swing_key(horizontal, mode)
+        if not key:
             return []
-        mask = md_int(self.meta.get(key), "mx")
-        if not mask:
-            return [SWING_STOP, SWING_SWING]
-        options = [SWING_STOP] if mask & 1 or horizontal else []
-        if not horizontal:
-            options += [f"position_{i}" for i in range(1, 15) if mask & (1 << i)]
-        options += [name for value, name in _SWING_NAMED.items() if value and mask & (1 << value)]
-        if horizontal and SWING_STOP not in options:
-            options.insert(0, SWING_STOP)
-        return options
+        mask = self._swing_mask(key)
+        patterns = [name for value, name in _SWING_NAMED.items() if value and mask & (1 << value)]
+        return [SWING_STOP, *(patterns or [SWING_SWING])]
+
+    def vane_positions(self, mode: Mode | None = None) -> list[str]:
+        """Fixed vertical louver positions the unit supports."""
+        key = self._swing_key(False, mode)
+        if not key:
+            return []
+        mask = self._swing_mask(key)
+        return [f"position_{i}" for i in range(1, 15) if mask & (1 << i)]
 
     def swing(self, horizontal: bool) -> str | None:
-        keys = self.keys_for()
-        if not keys:
-            return None
-        raw = le_uint(self.values.get(keys.swing_h if horizontal else keys.swing_v))
+        """Current airflow pattern; a fixed position reads as ``stop``."""
+        raw = self._swing_raw(horizontal)
         if raw is None:
             return None
         if raw in _SWING_NAMED:
             return _SWING_NAMED[raw]
-        if 1 <= raw <= 14:
-            return SWING_STOP if horizontal else f"position_{raw}"
-        return None
+        return SWING_STOP if 1 <= raw <= 14 else None
+
+    @property
+    def vane_position(self) -> str | None:
+        """Fixed vertical louver position, or None while the louver moves."""
+        raw = self._swing_raw(False)
+        return f"position_{raw}" if raw is not None and 1 <= raw <= 14 else None
+
+    def _swing_raw(self, horizontal: bool) -> int | None:
+        key = self._swing_key(horizontal)
+        return le_uint(self.values.get(key)) if key else None
 
     # -- sensors
 
@@ -500,11 +518,16 @@ class RoomAC:
     def _encode_swing(self, option: str, *, horizontal: bool, key: str) -> str:
         if option.startswith("position_"):
             return to_le_hex(int(option.removeprefix("position_")), 3)
-        if horizontal and option == SWING_STOP:
-            # Keep a fixed horizontal position rather than resetting it.
+        if option == SWING_STOP:
+            # Keep a fixed position rather than resetting it.
             current = le_uint(self.values.get(key))
             if current is not None and 1 <= current <= 14:
                 return self.values[key]
+            mask = self._swing_mask(key)
+            if not horizontal and mask and not mask & 1:
+                # No plain "stop" on this unit: fix the louver at its first position.
+                first = next((i for i in range(1, 15) if mask & (1 << i)), 0)
+                return to_le_hex(first, 3)
         return to_le_hex(_VALUE_BY_SWING[option], 3)
 
     async def async_control(self, **changes: Any) -> None:

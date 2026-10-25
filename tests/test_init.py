@@ -16,10 +16,12 @@ from homeassistant.components.climate import (
 from homeassistant.components.climate import (
     DOMAIN as CLIMATE_DOMAIN,
 )
+from homeassistant.components.select import ATTR_OPTION, SERVICE_SELECT_OPTION
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
 from homeassistant.components.switch import SERVICE_TURN_ON
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import ATTR_ENTITY_ID, ATTR_TEMPERATURE, CONF_HOST
+from homeassistant.const import ATTR_ENTITY_ID, ATTR_TEMPERATURE, CONF_HOST, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
@@ -38,6 +40,7 @@ from custom_components.daikin_india.dsiot.codec import flatten
 from custom_components.daikin_india.dsiot.errors import AuthError, CommunicationError
 
 CLIMATE = "climate.bedroom_ac"
+VANE = "select.bedroom_ac_vertical_louver_position"
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
@@ -65,6 +68,8 @@ async def test_setup_creates_entities(hass: HomeAssistant, fake_transport) -> No
     assert state.attributes["current_humidity"] == 60
     assert state.attributes["fan_mode"] == "auto"
     assert state.attributes["preset_mode"] == "eco"
+    assert state.attributes["swing_modes"] == ["stop", "swing", "auto"]
+    assert state.attributes["swing_mode"] == "swing"
     assert HVACMode.HEAT in state.attributes["hvac_modes"]
 
     assert hass.states.get("sensor.bedroom_ac_outdoor_temperature").state == "35.0"
@@ -73,8 +78,20 @@ async def test_setup_creates_entities(hass: HomeAssistant, fake_transport) -> No
     assert hass.states.get("select.bedroom_ac_display_brightness").state == "high"
     assert hass.states.get("binary_sensor.bedroom_ac_filter_needs_cleaning").state == "off"
 
+    vane = hass.states.get(VANE)
+    assert vane.state == "unknown"
+    assert vane.attributes["options"] == [f"position_{i}" for i in range(1, 6)]
+
     registry = er.async_get(hass)
     assert registry.async_get(CLIMATE).unique_id == "aa:bb:cc:dd:ee:ff_climate"
+    assert registry.async_get(VANE).entity_category is EntityCategory.CONFIG
+    assert (
+        registry.async_get("switch.bedroom_ac_dew_clean").entity_category is EntityCategory.CONFIG
+    )
+    assert registry.async_get("switch.bedroom_ac_streamer").entity_category is None
+    compressor = registry.async_get("sensor.bedroom_ac_compressor_frequency")
+    assert compressor.entity_category is EntityCategory.DIAGNOSTIC
+    assert compressor.disabled_by is er.RegistryEntryDisabler.INTEGRATION
 
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert entry.state is ConfigEntryState.NOT_LOADED
@@ -118,6 +135,16 @@ async def test_climate_commands(hass: HomeAssistant, fake_transport) -> None:
         blocking=True,
     )
     assert flatten(fake_transport.writes[-1][1])[0]["dgc_status.e_1002.e_3003.p_20"] == "01"
+
+    await hass.services.async_call(
+        SELECT_DOMAIN,
+        SERVICE_SELECT_OPTION,
+        {ATTR_ENTITY_ID: VANE, ATTR_OPTION: "position_4"},
+        blocking=True,
+    )
+    assert flatten(fake_transport.writes[-1][1])[0]["dgc_status.e_1002.e_3001.p_05"] == "040000"
+    assert hass.states.get(VANE).state == "position_4"
+    assert hass.states.get(CLIMATE).attributes["swing_mode"] == "stop"
 
 
 async def test_setup_retries_when_offline(hass: HomeAssistant, fake_transport) -> None:

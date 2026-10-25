@@ -20,9 +20,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up select entities."""
-    async_add_entities(
-        DaikinLedSelect(c) for c in entry.runtime_data.coordinators if c.device.has(K_LED)
-    )
+    entities: list[SelectEntity] = []
+    for coordinator in entry.runtime_data.coordinators:
+        if coordinator.device.has(K_LED):
+            entities.append(DaikinLedSelect(coordinator))
+        if coordinator.device.vane_positions():
+            entities.append(DaikinVanePositionSelect(coordinator))
+    async_add_entities(entities)
 
 
 class DaikinLedSelect(DaikinEntity, SelectEntity):
@@ -42,3 +46,31 @@ class DaikinLedSelect(DaikinEntity, SelectEntity):
     @daikin_command
     async def async_select_option(self, option: str) -> None:
         await self.device.async_set_led(option)
+
+
+class DaikinVanePositionSelect(DaikinEntity, SelectEntity):
+    """Fixed vertical louver position; choosing one stops the swing."""
+
+    _attr_translation_key = "vertical_vane_position"
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, coordinator: DaikinCoordinator) -> None:
+        super().__init__(coordinator, "vertical_vane_position")
+        self._fallback_options = coordinator.device.vane_positions()
+
+    @property
+    def available(self) -> bool:
+        return super().available and bool(self.device.vane_positions())
+
+    @property
+    def options(self) -> list[str]:
+        return self.device.vane_positions() or self._fallback_options
+
+    @property
+    def current_option(self) -> str | None:
+        position = self.device.vane_position
+        return position if position in self.options else None
+
+    @daikin_command
+    async def async_select_option(self, option: str) -> None:
+        await self.device.async_control(swing_v=option)

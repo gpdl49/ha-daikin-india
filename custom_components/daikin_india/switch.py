@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -22,16 +24,37 @@ from .entity import DaikinEntity, daikin_command
 
 PARALLEL_UPDATES = 1
 
-# Entity key -> property key. Only created when the unit reports the property.
-SWITCHES: dict[str, str] = {
-    "streamer": K_STREAMER,
-    "outdoor_quiet": K_QUIET,
-    "dew_clean": K_DEW_CLEAN,
-    "smell_proof": K_SMELL_PROOF,
-    "good_sleep": K_GOOD_SLEEP,
-    "intelligent_eye_energy_saver": K_EYE_ENERGY_SAVER,
-    "intelligent_eye_auto_on_off": K_EYE_AUTO_ONOFF,
-}
+
+@dataclass(frozen=True, kw_only=True)
+class DaikinSwitchDescription(SwitchEntityDescription):
+    """Describes a feature switch; created only when the unit reports ``prop``."""
+
+    prop: str
+
+
+SWITCHES: tuple[DaikinSwitchDescription, ...] = (
+    DaikinSwitchDescription(key="streamer", prop=K_STREAMER),
+    DaikinSwitchDescription(key="outdoor_quiet", prop=K_QUIET),
+    DaikinSwitchDescription(key="good_sleep", prop=K_GOOD_SLEEP),
+    DaikinSwitchDescription(
+        key="dew_clean", prop=K_DEW_CLEAN, entity_category=EntityCategory.CONFIG
+    ),
+    DaikinSwitchDescription(
+        key="smell_proof", prop=K_SMELL_PROOF, entity_category=EntityCategory.CONFIG
+    ),
+    DaikinSwitchDescription(
+        key="intelligent_eye_energy_saver",
+        prop=K_EYE_ENERGY_SAVER,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+    ),
+    DaikinSwitchDescription(
+        key="intelligent_eye_auto_on_off",
+        prop=K_EYE_AUTO_ONOFF,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=False,
+    ),
+)
 
 
 async def async_setup_entry(
@@ -41,29 +64,33 @@ async def async_setup_entry(
 ) -> None:
     """Set up feature switches."""
     async_add_entities(
-        DaikinSwitch(coordinator, key, prop)
+        DaikinSwitch(coordinator, description)
         for coordinator in entry.runtime_data.coordinators
-        for key, prop in SWITCHES.items()
-        if coordinator.device.has(prop)
+        for description in SWITCHES
+        if coordinator.device.has(description.prop)
     )
 
 
 class DaikinSwitch(DaikinEntity, SwitchEntity):
     """Turns a unit feature on or off."""
 
-    def __init__(self, coordinator: DaikinCoordinator, key: str, prop: str) -> None:
-        super().__init__(coordinator, key)
-        self.entity_description = SwitchEntityDescription(key=key, translation_key=key)
-        self._prop = prop
+    entity_description: DaikinSwitchDescription
+
+    def __init__(
+        self, coordinator: DaikinCoordinator, description: DaikinSwitchDescription
+    ) -> None:
+        super().__init__(coordinator, description.key)
+        self.entity_description = description
+        self._attr_translation_key = description.key
 
     @property
     def is_on(self) -> bool | None:
-        return self.device.flag(self._prop)
+        return self.device.flag(self.entity_description.prop)
 
     @daikin_command
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self.device.async_set_flag(self._prop, True)
+        await self.device.async_set_flag(self.entity_description.prop, True)
 
     @daikin_command
     async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.device.async_set_flag(self._prop, False)
+        await self.device.async_set_flag(self.entity_description.prop, False)
