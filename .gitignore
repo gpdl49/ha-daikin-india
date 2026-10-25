@@ -20,3 +20,4 @@ __pycache__/
 # Private research notes (not for publication)
 private/
 *.log
+config_entry-*.json

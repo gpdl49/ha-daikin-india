@@ -25,6 +25,7 @@ TO_REDACT = {
     "adp_d.name",
     "adp_d.location",
     "adp_d.group.name",
+    "dgc_status.e_1002.e_A001.p_0F",  # per-unit hardware ID
     "edge_id",
 }
 

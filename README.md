@@ -101,6 +101,8 @@ Add `climate-fan-modes`, `climate-swing-modes` or `climate-preset-modes` to the 
 
 ## Testing checklist
 
+**Tested so far:** 7 cloud-connected units with Wi-Fi adapter firmware 3.10.0 (model codes 8C70 and 9C70, as shown in diagnostics). Local control, Heat mode, humidity sensors and fixed louver positions haven't been tested yet.
+
 If you're helping test, please open an issue with your results. Include your AC's model, the adapter firmware (shown on the device page) and a **diagnostics download**. Include one from a local entry and one from a cloud entry if you can. For anything that fails, add debug logs (see Troubleshooting).
 
 ### Setup
@@ -108,7 +110,6 @@ If you're helping test, please open an issue with your results. Include your AC'
 - [ ] **Discovery.** Does "Find adapters on my network" find the unit? Include the unit name and IP it shows.
 - [ ] **Manual IP.** Does "Enter adapter IP address" work?
 - [ ] **Lock PIN.** If the unit has a lock password set in the GO DAIKIN app, does the integration ask for the PIN and accept it? Does a wrong PIN show an error?
-- [ ] **Cloud: password login.** Does logging in with your phone number and password work? Are all your units added?
 - [ ] **Cloud: SMS login.** Does logging in with your phone number and an SMS code work?
 - [ ] **Cloud: phone app session.** After logging in from Home Assistant, is the GO DAIKIN app on your phone still logged in? (Some Daikin accounts may allow only one session.)
 - [ ] **Cloud: staying logged in.** Leave the cloud entry running for more than 2 hours. Does it keep updating without asking you to log in again?
@@ -116,10 +117,9 @@ If you're helping test, please open an issue with your results. Include your AC'
 ### Reading state
 
 - [ ] **Current state.** Does the climate card show the same power, mode, set temperature, fan speed and swing as the GO DAIKIN app?
-- [ ] **Room temperature.** Does it match the unit's display or the app? Note whether it shows half degrees (for example 23.5).
+- [ ] **Room temperature.** Does it match the unit's display or the app?
 - [ ] **Humidity.** Does it match the app, if your unit has a humidity sensor?
-- [ ] **Outdoor temperature and compressor frequency.** Do these look plausible? The compressor should read 0 when the unit is idle.
-- [ ] **Energy and runtime.** Compare "Energy today" and "Runtime today" with the app's energy screen. Does energy reset to about 0 after midnight?
+- [ ] **Energy and runtime.** Compare "Energy today" and "Runtime today" with the app's energy screen. Energy is reported in 0.1 kWh steps. Does it reset to 0 after midnight?
 - [ ] **Changes made in the app.** When you change something in the GO DAIKIN app, does Home Assistant show it within about 20 s (local) or 60 s (cloud)?
 
 ### Controls
@@ -129,7 +129,7 @@ Check each of these from Home Assistant. Confirm that the unit responds (it beep
 - [ ] Power on and power off.
 - [ ] **Each mode:** Cool, Heat (if your unit has it), Dry, Fan and Auto.
 - [ ] **Set temperature** in Cool and Heat, including half-degree steps.
-- [ ] **Auto mode.** Does the climate card show a set temperature, or does the "Auto mode temperature offset" slider appear? If the slider appears, does changing it work?
+- [ ] **Auto mode.** Does setting the temperature in Auto work? (Some older units use a −2 to +2 °C offset instead; the integration then shows an "Auto mode temperature offset" slider.)
 - [ ] **Fan speed:** Auto, Quiet and Low to High (five steps). In Dry mode the fan should stay on Auto, as it does in the app.
 - [ ] **Vertical swing:** Fixed, Swing, Auto and any other airflow patterns shown. Then the "Vertical louver position" select: do the positions shown match what your unit supports, and does choosing one stop the swing?
 - [ ] **Horizontal swing**, if your unit has it.
@@ -140,13 +140,10 @@ Check each of these from Home Assistant. Confirm that the unit responds (it beep
 
 ### Known unknowns
 
-These parts were inferred from the app's code and haven't been checked on real hardware. Please call them out in your report:
+These haven't been confirmed on real hardware yet. Please call them out in your report:
 
-- Which room-temperature value the unit reports: precise (half degrees) or whole degrees.
-- Whether Auto mode uses a relative offset (−2 to +2 °C) or an absolute temperature.
 - Whether writes are accepted as sent. If a control does nothing or shows an error, include the error message and debug logs.
 - Whether any mode shows as unknown. This can happen with Humidify, or while the unit is in Auto mode.
-- The units of the energy figures (Wh per day is assumed).
 
 ## How it works
 
