@@ -57,6 +57,8 @@ Go to **Settings → Devices & services → Add integration → Daikin India** a
 ## Troubleshooting
 
 - **"This adapter does not support the DSIOT protocol".** The adapter's firmware predates DSIOT. Update the adapter from the Daikin AC app and try again.
+- **Cloud account asks you to log in again (`invalid_grant`).** Daikin ended the saved session, for example after a long outage or a sign-in elsewhere. With **Stay signed in** ticked, the integration logs in again by itself; otherwise open the repair prompt and log in. If it keeps happening, please open an issue with debug logs.
+- **A change takes a few seconds to show.** Cloud units relay state with a delay. The integration shows your change straight away and confirms it with the unit a few seconds later.
 - **Discovery finds nothing.** Enter the IP address instead. You can find it in your router's DHCP client list.
 - **Something looks wrong.** Open the device page, choose **Download diagnostics**, and attach the file to an issue. The file contains the raw values the unit reports; personal identifiers (MAC, names, tokens, phone number) are redacted.
 - **Debug logs.** Enable them with:
