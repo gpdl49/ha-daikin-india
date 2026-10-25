@@ -1,0 +1,11 @@
+name: Feature request
+description: Suggest a new feature or an AC function to support.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like?
+      description: Include the AC model and how the feature appears in the Daikin AC app, if relevant.
+    validations:
+      required: true
