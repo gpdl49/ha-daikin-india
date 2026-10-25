@@ -22,6 +22,7 @@ TO_REDACT = {
     "adp_i.edid",
     "adp_d.name",
     "adp_d.location",
+    "adp_d.group.name",
     "edge_id",
 }
 

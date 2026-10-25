@@ -140,7 +140,7 @@ class Transport(ABC):
 
 ### Cloud session
 
-- **Stored in the HA config entry:** `phone`, `install_uuid`, and the tokens (`id_token`, `refresh_token`, `cd_*`, `issued_at`, `expires_in`). The password is stored too, but only if the user opts in to automatic re-login.
+- **Stored in the HA config entry:** `phone`, `install_uuid`, and the tokens (`id_token`, `refresh_token`, `cd_*`, `issued_at`, `expires_in`). The password is never stored.
 - `login_password(phone, pw)` and `login_otp_start(phone)` / `login_otp_verify(session, otp)` produce a `Tokens` object.
 - `refresh()` runs proactively when less than 5 minutes remain before expiry. If the refresh fails, the integration raises `ConfigEntryAuthFailed`, which starts the HA reauth flow.
 - Refreshes are single-flight: an asyncio lock, and a new refresh isn't started within 60 s of the last one (as in the app).
@@ -192,7 +192,6 @@ class Transport(ABC):
 5. **Options:**
    - Polling interval: local 15 s, cloud 60 s.
    - Transport preference: `local`, `cloud` or `auto`.
-   - Opt-in to storing the password for automatic re-login.
 
 ### Coordinators and routing
 

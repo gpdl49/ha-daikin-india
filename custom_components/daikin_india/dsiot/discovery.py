@@ -61,6 +61,8 @@ class _Protocol(asyncio.DatagramProtocol):
         info = parse_reply(data)
         if info:
             port = info.get("api_port")
+            if port and not port.isdigit():
+                return
             host = f"{addr[0]}:{port}" if port and port != "80" else addr[0]
             self.found[host] = info
 

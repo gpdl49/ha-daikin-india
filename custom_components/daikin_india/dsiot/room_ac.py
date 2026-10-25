@@ -268,7 +268,7 @@ class RoomAC:
         if mode in (Mode.COOL, Mode.HEAT):
             return True
         if mode == Mode.AUTO:
-            raw = le_uint(self.values.get(MODE_KEYS[Mode.AUTO].setpoint))
+            raw = le_uint(self.values.get(MODE_KEYS[Mode.AUTO].setpoint or ""))
             # Some units report an absolute auto setpoint (°C×2 ≥ 10 °C).
             return raw is not None and 20 <= raw <= 80
         return False
@@ -309,11 +309,12 @@ class RoomAC:
         keys = self.keys_for()
         if not keys:
             return None
-        return _FAN_BY_VALUE.get(le_uint(self.values.get(keys.fan)))
+        raw = le_uint(self.values.get(keys.fan))
+        return _FAN_BY_VALUE.get(raw) if raw is not None else None
 
     def has_fan_control(self, mode: Mode | None = None) -> bool:
         keys = self.keys_for(mode)
-        return bool(keys) and keys.fan in self.values
+        return keys is not None and keys.fan in self.values
 
     def swing_options(self, horizontal: bool, mode: Mode | None = None) -> list[str]:
         """Air-direction options for a mode, from the ``md.mx`` bitmask."""

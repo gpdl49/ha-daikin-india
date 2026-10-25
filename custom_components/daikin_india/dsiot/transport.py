@@ -44,7 +44,7 @@ class Transport(ABC):
     def __init__(self, session: aiohttp.ClientSession) -> None:
         self._session = session
         # Adapters handle concurrent requests poorly; the app serialises them.
-        self._lock = asyncio.Lock()
+        self._lock: asyncio.Lock | _NullLock = asyncio.Lock()
         self._write_method = "PUT"
 
     @abstractmethod
@@ -110,7 +110,9 @@ class Transport(ABC):
                 "/dsiot/multireq not found; the adapter firmware may be too old"
             )
         if status >= 400:
-            raise CommunicationError(f"HTTP {status} from {self._url()}: {text[:200]}")
+            # The body stays out of the exception, which ends up in the UI and logs.
+            _LOGGER.debug("HTTP %s from %s: %.200s", status, self._url(), text)
+            raise CommunicationError(f"HTTP {status} from {self._url()}")
         try:
             data = json.loads(text)
         except ValueError as err:
