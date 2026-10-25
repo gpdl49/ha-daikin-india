@@ -9,6 +9,7 @@ power-transition marker ``e_3003.p_2D``.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
@@ -16,7 +17,7 @@ from urllib.parse import unquote
 
 from .codec import ascii_reversed, build_tree, flatten, le_int, le_uint, md_int, to_le_hex
 from .errors import UnsupportedDeviceError
-from .transport import Transport, check_rsc
+from .transport import CloudTransport, Transport, check_rsc
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -132,6 +133,13 @@ _VALUE_BY_SWING = {v: k for k, v in _SWING_NAMED.items()}
 
 LED_OPTIONS = ["off", "low", "high"]
 
+# How long a written value overrides disagreeing polls. The adapter applies a
+# write a moment after acknowledging it, and the cloud's copy of the status
+# trees lags the unit further, so an immediate confirming poll often still
+# returns the old value.
+LOCAL_WRITE_HOLD = 10.0
+CLOUD_WRITE_HOLD = 30.0
+
 # App defaults for India when the unit gives no range (tenths not needed).
 _DEFAULT_RANGE = {Mode.COOL: (18.0, 32.0), Mode.HEAT: (18.0, 30.0)}
 AUTO_OFFSET_RANGE = (-2.0, 2.0)
@@ -157,6 +165,12 @@ class RoomAC:
         self.base = transport.base_for(edge_id)
         self.values: dict[str, Any] = dict(initial or {})
         self.meta: dict[str, dict[str, Any]] = {}
+        self.write_hold = (
+            CLOUD_WRITE_HOLD if isinstance(transport, CloudTransport) else LOCAL_WRITE_HOLD
+        )
+        # Written key -> (value, monotonic expiry) awaiting confirmation by a poll.
+        self._pending: dict[str, tuple[Any, float]] = {}
+        self._clock = time.monotonic
 
     # ----------------------------------------------------------------- reads
 
@@ -187,6 +201,7 @@ class RoomAC:
             flatten(response.get("pc"), "", values, meta)
         if K_MODE not in values and K_POWER not in values:
             raise UnsupportedDeviceError("Unit did not report room AC status")
+        self._hold_pending(values)
         self.values = values
         self.meta = meta
 
@@ -530,18 +545,53 @@ class RoomAC:
         return flat
 
     async def _write_indoor(self, flat: dict[str, str]) -> None:
-        await self.transport.write(f"{self.base}/{INDOOR}", build_tree(flat))
-        self._apply(flat)
+        await self._write(f"{self.base}/{INDOOR}", flat)
 
     async def _write_outdoor(self, flat: dict[str, str]) -> None:
-        await self.transport.write(f"{self.base}/{OUTDOOR}", build_tree(flat))
+        await self._write(f"{self.base}/{OUTDOOR}", flat)
+
+    async def _write(self, to: str, flat: dict[str, str]) -> None:
+        try:
+            await self.transport.write(to, build_tree(flat))
+        except Exception:
+            # Stop holding earlier optimistic values for these keys so the next
+            # poll shows what the unit really has.
+            for key in flat:
+                self._pending.pop(key, None)
+            raise
         self._apply(flat)
 
     def _apply(self, flat: dict[str, str]) -> None:
-        """Optimistically reflect a successful write until the next poll."""
+        """Optimistically reflect a successful write.
+
+        The written values are held over disagreeing polls for ``write_hold``
+        seconds, or until a poll reports them, so a stale confirming read does
+        not flip the entity back.
+        """
+        expires = self._clock() + self.write_hold
         for key, value in flat.items():
             if key != K_POWER_CHANGE:
                 self.values[key] = value
+                self._pending[key] = (value, expires)
+
+    def _hold_pending(self, values: dict[str, Any]) -> None:
+        """Overlay unconfirmed writes on freshly polled values."""
+        now = self._clock()
+        for key, (value, expires) in list(self._pending.items()):
+            polled = values.get(key)
+            if _same(polled, value):
+                del self._pending[key]
+            elif now >= expires:
+                _LOGGER.debug("Unit did not confirm %s=%s (reports %s)", key, value, polled)
+                del self._pending[key]
+            else:
+                values[key] = value
+
+
+def _same(polled: Any, written: Any) -> bool:
+    if isinstance(polled, str) and isinstance(written, str):
+        return polled.upper() == written.upper()
+    return polled == written
 
 
 def parse_edge(edge: dict[str, Any]) -> tuple[str, bool, dict[str, Any]]:
