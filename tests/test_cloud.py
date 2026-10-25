@@ -61,7 +61,7 @@ async def test_password_login(hass: HomeAssistant, aioclient_mock: AiohttpClient
     aioclient_mock.post(LOGIN, json=LOGIN_RESPONSE)
     saved: list[Tokens] = []
     auth = CloudAuth(async_get_clientsession(hass), "uuid-1", on_tokens_updated=saved.append)
-    tokens = await auth.async_login_password("+919876543210", "pw")
+    tokens = await auth.async_login_password("+919876543210", "pw-secret")
     assert tokens.id_token == "id-1"
     assert tokens.cd_access_token == "cda"
     assert saved == [tokens]
@@ -70,14 +70,14 @@ async def test_password_login(hass: HomeAssistant, aioclient_mock: AiohttpClient
     assert body["auth_type"] == "PASS"
     assert body["uuid"] == "uuid-1"
     assert len(base64.b64decode(body["code"])) == 512
-    assert "pw" not in str(body)
+    assert "pw-secret" not in str(body)
 
 
 async def test_login_rejected(hass: HomeAssistant, aioclient_mock: AiohttpClientMocker) -> None:
     aioclient_mock.post(LOGIN, status=401, json={"message": "Incorrect username or password."})
     auth = CloudAuth(async_get_clientsession(hass), "uuid-1")
     try:
-        await auth.async_login_password("+919876543210", "pw")
+        await auth.async_login_password("+919876543210", "pw-secret")
     except Exception as err:
         assert "Incorrect" in str(err)
     else:

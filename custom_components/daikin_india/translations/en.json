@@ -97,6 +97,7 @@
     },
     "error": {
       "cannot_connect": "Failed to connect",
+      "invalid_host": "Enter an IP address or hostname, optionally with a port (for example 192.168.1.50)",
       "invalid_auth": "Invalid phone number or password",
       "invalid_otp": "The SMS code was not accepted",
       "otp_rejected": "Daikin did not send an SMS code to this number",

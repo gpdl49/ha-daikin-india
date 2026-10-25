@@ -4,14 +4,17 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_HOST, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.daikin_india.config_flow import normalize_host
 from custom_components.daikin_india.const import (
     CONF_CONNECTION,
+    CONF_INSTALL_UUID,
     CONF_PHONE,
     CONF_PIN,
     CONF_TOKENS,
@@ -178,3 +181,140 @@ async def test_local_reauth(hass: HomeAssistant, fake_transport) -> None:
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reauth_successful"
     assert entry.data[CONF_PIN] == "2222"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("192.0.2.10", "192.0.2.10"),
+        (" http://192.0.2.10/ ", "192.0.2.10"),
+        ("ac.local:8080", "ac.local:8080"),
+        ("[fe80::1]", "[fe80::1]"),
+        ("192.0.2.10/dsiot", None),
+        ("user@192.0.2.10", None),
+        ("192.0.2.10:99999", None),
+        ("https://192.0.2.10", None),
+        ("", None),
+    ],
+)
+def test_normalize_host(value: str, expected: str | None) -> None:
+    assert normalize_host(value) == expected
+
+
+async def test_local_flow_invalid_host(hass: HomeAssistant, fake_transport) -> None:
+    result = await _start(hass, "local")
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.0.2.10/x?y"}
+    )
+    assert result["errors"] == {"base": "invalid_host"}
+    assert fake_transport.reads == 0
+
+
+def _local_entry(hass: HomeAssistant, unique_id: str = "aa:bb:cc:dd:ee:ff") -> MockConfigEntry:
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=unique_id,
+        data={CONF_CONNECTION: CONNECTION_LOCAL, CONF_HOST: "192.0.2.10", CONF_PIN: ""},
+    )
+    entry.add_to_hass(hass)
+    return entry
+
+
+async def test_reconfigure(hass: HomeAssistant, fake_transport) -> None:
+    entry = _local_entry(hass)
+    result = await entry.start_reconfigure_flow(hass)
+    assert result["step_id"] == "reconfigure"
+    with patch(SETUP, return_value=True):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "192.0.2.11", CONF_PIN: "1234"}
+        )
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_HOST] == "192.0.2.11"
+    assert entry.data[CONF_PIN] == "1234"
+
+
+async def test_reconfigure_wrong_device(hass: HomeAssistant, fake_transport) -> None:
+    entry = _local_entry(hass, unique_id="11:22:33:44:55:66")
+    result = await entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.0.2.11"}
+    )
+    assert result["reason"] == "wrong_device"
+    assert entry.data[CONF_HOST] == "192.0.2.10"
+
+
+async def test_reconfigure_without_mac(hass: HomeAssistant, fake_transport, status) -> None:
+    status["responses"][2]["pc"]["pch"] = []  # no adp_i.mac
+    entry = _local_entry(hass, unique_id="192.0.2.10")
+    result = await entry.start_reconfigure_flow(hass)
+    with patch(SETUP, return_value=True):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "192.0.2.11"}
+        )
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_HOST] == "192.0.2.11"
+
+
+async def test_cloud_title_hides_phone(hass: HomeAssistant) -> None:
+    result = await _start(hass, "cloud")
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "cloud_password"}
+    )
+    with (
+        patch(
+            "custom_components.daikin_india.config_flow.CloudAuth.async_login_password",
+            return_value=TOKENS,
+        ),
+        patch(SETUP, return_value=True),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_PHONE: "+919876543210", CONF_PASSWORD: "secret"}
+        )
+    assert "9876543210" not in result["title"]
+    assert CONF_PASSWORD not in result["data"]
+
+
+async def test_cloud_reauth(hass: HomeAssistant) -> None:
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="cloud_user-1",
+        data={
+            CONF_CONNECTION: CONNECTION_CLOUD,
+            CONF_PHONE: "+919876543210",
+            CONF_INSTALL_UUID: "install-1",
+            CONF_TOKENS: {"id_token": "old", "refresh_token": "old"},
+        },
+    )
+    entry.add_to_hass(hass)
+    result = await entry.start_reauth_flow(hass)
+    assert result["step_id"] == "reauth_cloud"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "cloud_password"}
+    )
+    other = Tokens(id_token="x", refresh_token="y", uid="user-2")
+    with patch(
+        "custom_components.daikin_india.config_flow.CloudAuth.async_login_password",
+        return_value=other,
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_PHONE: "+919876543210", CONF_PASSWORD: "secret"}
+        )
+    assert result["reason"] == "wrong_account"
+
+    result = await entry.start_reauth_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "cloud_password"}
+    )
+    with (
+        patch(
+            "custom_components.daikin_india.config_flow.CloudAuth.async_login_password",
+            return_value=TOKENS,
+        ),
+        patch(SETUP, return_value=True),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_PHONE: "+919876543210", CONF_PASSWORD: "secret"}
+        )
+    assert result["reason"] == "reauth_successful"
+    assert entry.data[CONF_TOKENS]["id_token"] == "id"
+    assert entry.data[CONF_INSTALL_UUID] == "install-1"
