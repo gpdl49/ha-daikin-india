@@ -16,6 +16,7 @@ from custom_components.daikin_india.dsiot.room_ac import (
     K_POWER_CHILL,
     K_QUIET,
     K_STREAMER,
+    K_VARIABLE,
     parse_edge,
 )
 
@@ -167,6 +168,23 @@ async def test_power_chill_preset_clears_econo_and_quiet(device: RoomAC) -> None
     indoor, outdoor = device.transport.writes[-2:]
     assert flatten(indoor[1])[0][K_ECONO] == "00"
     assert flatten(outdoor[1])[0] == {K_POWER_CHILL: "01", K_QUIET: "00"}
+
+
+async def test_variable(device: RoomAC) -> None:
+    assert device.variable is None
+    device.values[K_VARIABLE] = "03"
+    assert device.variable == "3"
+    await device.async_set_variable("5")
+    assert _written(device.transport)[K_VARIABLE] == "05"
+    assert device.variable == "5"
+
+    # Power Chill turns it off first, as the app does.
+    await device.async_set_preset(econo=False, power_chill=True)
+    variable_write = next(
+        flatten(pc)[0] for _to, pc in device.transport.writes[-3:] if K_VARIABLE in flatten(pc)[0]
+    )
+    assert variable_write[K_VARIABLE] == "00"
+    assert device.variable == "off"
 
 
 class _Clock:

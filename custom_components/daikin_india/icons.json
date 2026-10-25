@@ -58,6 +58,12 @@
       },
       "vertical_vane_position": {
         "default": "mdi:arrow-up-down"
+      },
+      "variable": {
+        "default": "mdi:gauge",
+        "state": {
+          "off": "mdi:gauge-empty"
+        }
       }
     },
     "sensor": {

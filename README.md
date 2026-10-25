@@ -24,6 +24,7 @@ The [GO DAIKIN integration](https://github.com/doubleukay/godaikin-ha) (`godaiki
 | Climate | Power, mode (cool, heat, auto, dry, fan), target temperature (0.5 °C steps), fan speed (auto, quiet, low to high in five steps), vertical airflow (fixed, swing, auto, and natural/circulation/comfort where supported), horizontal swing, and presets Normal, Econo and Power Chill |
 | Sensors | Room temperature and humidity, outdoor temperature, energy used today (kWh; works with the Energy dashboard) |
 | Switches | Streamer, outdoor-unit quiet, Good Sleep |
+| Selects | Variable capacity (the remote's "Variable" button: Off or Level 1–5; cool and dry only) |
 | Configuration | Dew Clean, odour prevention, display (LED) brightness, vertical louver position, auto-mode temperature offset (−2 to +2 °C), Intelligent Eye energy saver and auto on/off (both disabled by default) |
 | Diagnostics | Runtime today, error code, compressor frequency and Wi-Fi signal (both disabled by default) |
 | Binary sensors | Filter needs cleaning; error present |

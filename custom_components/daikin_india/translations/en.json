@@ -204,6 +204,17 @@
           "position_13": "Position 13",
           "position_14": "Position 14"
         }
+      },
+      "variable": {
+        "name": "Variable capacity",
+        "state": {
+          "off": "Off",
+          "1": "Level 1",
+          "2": "Level 2",
+          "3": "Level 3",
+          "4": "Level 4",
+          "5": "Level 5"
+        }
       }
     },
     "sensor": {

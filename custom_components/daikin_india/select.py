@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import DaikinConfigEntry, DaikinCoordinator
-from .dsiot.room_ac import K_LED, LED_OPTIONS
+from .dsiot.room_ac import K_LED, K_VARIABLE, LED_OPTIONS, VARIABLE_MODES, VARIABLE_OPTIONS
 from .entity import DaikinEntity, daikin_command
 
 PARALLEL_UPDATES = 1
@@ -24,6 +24,8 @@ async def async_setup_entry(
     for coordinator in entry.runtime_data.coordinators:
         if coordinator.device.has(K_LED):
             entities.append(DaikinLedSelect(coordinator))
+        if coordinator.device.has(K_VARIABLE):
+            entities.append(DaikinVariableSelect(coordinator))
         if coordinator.device.vane_positions():
             entities.append(DaikinVanePositionSelect(coordinator))
     async_add_entities(entities)
@@ -46,6 +48,28 @@ class DaikinLedSelect(DaikinEntity, SelectEntity):
     @daikin_command
     async def async_select_option(self, option: str) -> None:
         await self.device.async_set_led(option)
+
+
+class DaikinVariableSelect(DaikinEntity, SelectEntity):
+    """Compressor capacity limit ("Variable" on the remote), cool and dry only."""
+
+    _attr_translation_key = "variable"
+    _attr_options = VARIABLE_OPTIONS
+
+    def __init__(self, coordinator: DaikinCoordinator) -> None:
+        super().__init__(coordinator, "variable")
+
+    @property
+    def available(self) -> bool:
+        return super().available and self.device.mode in VARIABLE_MODES
+
+    @property
+    def current_option(self) -> str | None:
+        return self.device.variable
+
+    @daikin_command
+    async def async_select_option(self, option: str) -> None:
+        await self.device.async_set_variable(option)
 
 
 class DaikinVanePositionSelect(DaikinEntity, SelectEntity):

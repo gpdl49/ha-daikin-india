@@ -51,6 +51,7 @@ K_DEW_CLEAN = _FEAT + "p_B2"
 K_EYE_ENERGY_SAVER = _FEAT + "p_6E"
 K_EYE_AUTO_ONOFF = _FEAT + "p_6F"
 K_LED = _FEAT + "p_BC"
+K_VARIABLE = _FEAT + "p_B1"
 K_QUIET = _OUT + "e_3002.p_3D"
 K_POWER_CHILL = _OUT + "e_3002.p_44"
 
@@ -131,6 +132,9 @@ _SWING_NAMED = {
 _VALUE_BY_SWING = {v: k for k, v in _SWING_NAMED.items()}
 
 LED_OPTIONS = ["off", "low", "high"]
+# Capacity limit from the remote's "Variable" button; the app offers it in cool/dry.
+VARIABLE_OPTIONS = ["off", "1", "2", "3", "4", "5"]
+VARIABLE_MODES = (Mode.COOL, Mode.DRY)
 
 # How long a written value overrides disagreeing polls. The adapter applies a
 # write a moment after acknowledging it, and the cloud's copy of the status
@@ -445,6 +449,11 @@ class RoomAC:
         raw = le_uint(self.values.get(K_LED))
         return LED_OPTIONS[raw] if raw is not None and raw < len(LED_OPTIONS) else None
 
+    @property
+    def variable(self) -> str | None:
+        raw = le_uint(self.values.get(K_VARIABLE))
+        return VARIABLE_OPTIONS[raw] if raw is not None and raw < len(VARIABLE_OPTIONS) else None
+
     # ---------------------------------------------------------------- writes
 
     def build_control(
@@ -551,6 +560,11 @@ class RoomAC:
         flat[K_LED] = to_le_hex(LED_OPTIONS.index(option), 1)
         await self._write_indoor(flat)
 
+    async def async_set_variable(self, option: str) -> None:
+        flat = self.build_control()
+        flat[K_VARIABLE] = to_le_hex(VARIABLE_OPTIONS.index(option), 1)
+        await self._write_indoor(flat)
+
     async def async_set_preset(self, econo: bool, power_chill: bool) -> None:
         """Set the mutually exclusive Econo / Power Chill modes."""
         if self.has(K_ECONO) and self.flag(K_ECONO) != econo:
@@ -558,6 +572,8 @@ class RoomAC:
             flat[K_ECONO] = "01" if econo else "00"
             await self._write_indoor(flat)
         if self.has(K_POWER_CHILL) and self.flag(K_POWER_CHILL) != power_chill:
+            if power_chill and self.variable not in (None, "off"):
+                await self.async_set_variable("off")  # as the app does with Power Chill
             await self._write_outdoor(self._outdoor_flags(K_POWER_CHILL, power_chill))
 
     def _outdoor_flags(self, key: str, on: bool) -> dict[str, str]:
