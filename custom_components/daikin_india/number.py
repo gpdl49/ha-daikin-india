@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -33,6 +33,7 @@ class DaikinAutoOffset(DaikinEntity, NumberEntity):
     """Temperature offset used in auto mode (the app's LL…HH setting)."""
 
     _attr_translation_key = "auto_offset"
+    _attr_entity_category = EntityCategory.CONFIG
     _attr_native_min_value = AUTO_OFFSET_RANGE[0]
     _attr_native_max_value = AUTO_OFFSET_RANGE[1]
     _attr_native_step = 1.0

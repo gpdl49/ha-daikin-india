@@ -67,6 +67,8 @@ SENSORS: tuple[DaikinSensorDescription, ...] = (
         device_class=SensorDeviceClass.FREQUENCY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
         value_fn=lambda d: d.compressor_frequency,
     ),
     DaikinSensorDescription(
@@ -84,6 +86,7 @@ SENSORS: tuple[DaikinSensorDescription, ...] = (
         device_class=SensorDeviceClass.DURATION,
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfTime.MINUTES,
+        entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda d: d.runtime_today,
     ),
     DaikinSensorDescription(

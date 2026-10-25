@@ -130,11 +130,11 @@
             "state": {
               "auto": "Auto",
               "quiet": "Quiet",
-              "1": "Level 1",
-              "2": "Level 2",
-              "3": "Level 3",
-              "4": "Level 4",
-              "5": "Level 5"
+              "1": "Low",
+              "2": "Medium-low",
+              "3": "Medium",
+              "4": "Medium-high",
+              "5": "High"
             }
           },
           "swing_mode": {
@@ -144,21 +144,7 @@
               "auto": "Auto",
               "natural": "Natural wind",
               "circulation": "Circulation",
-              "comfort": "Comfort airflow",
-              "position_1": "Position 1",
-              "position_2": "Position 2",
-              "position_3": "Position 3",
-              "position_4": "Position 4",
-              "position_5": "Position 5",
-              "position_6": "Position 6",
-              "position_7": "Position 7",
-              "position_8": "Position 8",
-              "position_9": "Position 9",
-              "position_10": "Position 10",
-              "position_11": "Position 11",
-              "position_12": "Position 12",
-              "position_13": "Position 13",
-              "position_14": "Position 14"
+              "comfort": "Comfort airflow"
             }
           },
           "swing_horizontal_mode": {
@@ -170,7 +156,7 @@
           },
           "preset_mode": {
             "state": {
-              "none": "None",
+              "none": "Normal",
               "eco": "Econo",
               "boost": "Power Chill"
             }
@@ -198,6 +184,25 @@
           "off": "Off",
           "low": "Low",
           "high": "High"
+        }
+      },
+      "vertical_vane_position": {
+        "name": "Vertical louver position",
+        "state": {
+          "position_1": "Position 1",
+          "position_2": "Position 2",
+          "position_3": "Position 3",
+          "position_4": "Position 4",
+          "position_5": "Position 5",
+          "position_6": "Position 6",
+          "position_7": "Position 7",
+          "position_8": "Position 8",
+          "position_9": "Position 9",
+          "position_10": "Position 10",
+          "position_11": "Position 11",
+          "position_12": "Position 12",
+          "position_13": "Position 13",
+          "position_14": "Position 14"
         }
       }
     },

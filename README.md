@@ -13,14 +13,14 @@ This project is not affiliated with or endorsed by Daikin.
 
 | Entity | What it does |
 |---|---|
-| Climate | Power, mode (cool, heat, auto, dry, fan), target temperature (0.5 °C steps), fan speed (auto, quiet, levels 1–5), vertical and horizontal swing and louver positions, and presets Econo and Power Chill |
-| Sensors | Room temperature and humidity, outdoor temperature, compressor frequency, energy used today (kWh; works with the Energy dashboard), runtime today, error code, Wi-Fi signal (disabled by default) |
-| Switches | Streamer, outdoor-unit quiet, Dew Clean, odour prevention, Good Sleep, Intelligent Eye |
-| Select | Display (LED) brightness |
-| Number | Auto-mode temperature offset (−2 to +2 °C) |
+| Climate | Power, mode (cool, heat, auto, dry, fan), target temperature (0.5 °C steps), fan speed (auto, quiet, low to high in five steps), vertical airflow (fixed, swing, auto, and natural/circulation/comfort where supported), horizontal swing, and presets Normal, Econo and Power Chill |
+| Sensors | Room temperature and humidity, outdoor temperature, energy used today (kWh; works with the Energy dashboard) |
+| Switches | Streamer, outdoor-unit quiet, Good Sleep |
+| Configuration | Dew Clean, odour prevention, display (LED) brightness, vertical louver position, auto-mode temperature offset (−2 to +2 °C), Intelligent Eye energy saver and auto on/off (both disabled by default) |
+| Diagnostics | Runtime today, error code, compressor frequency and Wi-Fi signal (both disabled by default) |
 | Binary sensors | Filter needs cleaning; error present |
 
-An entity is only created if your unit reports that feature. Options such as the available modes and swing positions are also read from the unit itself.
+An entity is only created if your unit reports that feature. Options such as the available modes, airflow patterns and louver positions are also read from the unit itself. Entities that are disabled by default can be enabled from the device page.
 
 ## Installation
 
@@ -98,11 +98,11 @@ Check each of these from Home Assistant. Confirm that the unit responds (it beep
 - [ ] **Each mode:** Cool, Heat (if your unit has it), Dry, Fan and Auto.
 - [ ] **Set temperature** in Cool and Heat, including half-degree steps.
 - [ ] **Auto mode.** Does the climate card show a set temperature, or does the "Auto mode temperature offset" slider appear? If the slider appears, does changing it work?
-- [ ] **Fan speed:** Auto, Quiet and levels 1–5. In Dry mode the fan should stay on Auto, as it does in the app.
-- [ ] **Vertical swing:** Swing, Auto and the fixed positions. Do the positions shown match what your unit supports?
+- [ ] **Fan speed:** Auto, Quiet and Low to High (five steps). In Dry mode the fan should stay on Auto, as it does in the app.
+- [ ] **Vertical swing:** Fixed, Swing, Auto and any other airflow patterns shown. Then the "Vertical louver position" select: do the positions shown match what your unit supports, and does choosing one stop the swing?
 - [ ] **Horizontal swing**, if your unit has it.
 - [ ] **Presets.** Econo and Power Chill. Turning on Power Chill should turn off Econo and outdoor quiet.
-- [ ] **Switches.** Each switch your unit shows (Streamer, Outdoor unit quiet, Dew clean, Odour prevention, Good sleep, Intelligent Eye). Test "Outdoor unit quiet" on its own, without changing anything else at the same time.
+- [ ] **Switches.** Each switch your unit shows (Streamer, Outdoor unit quiet, Good sleep, and under Configuration Dew clean, Odour prevention and Intelligent Eye). Test "Outdoor unit quiet" on its own, without changing anything else at the same time.
 - [ ] **Display brightness**, if shown.
 - [ ] **Local and cloud.** Do controls work the same way from both a local entry and a cloud entry?
 

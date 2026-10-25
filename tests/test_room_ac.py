@@ -67,16 +67,31 @@ async def test_decode(device: RoomAC) -> None:
 
 async def test_capabilities(device: RoomAC) -> None:
     assert device.supported_modes == [Mode.FAN, Mode.HEAT, Mode.COOL, Mode.AUTO, Mode.DRY]
-    assert device.swing_options(horizontal=False) == [
-        "position_1",
-        "position_2",
-        "position_3",
-        "position_4",
-        "position_5",
-        "swing",
-        "auto",
-    ]
+    assert device.swing_options(horizontal=False) == ["stop", "swing", "auto"]
+    assert device.vane_positions() == [f"position_{i}" for i in range(1, 6)]
     assert device.swing_options(horizontal=True) == ["stop", "swing", "auto"]
+
+
+async def test_swing_without_metadata(device: RoomAC) -> None:
+    # Cloud replies may lack md: still offer a swing control, but no positions.
+    device.meta = {}
+    assert device.swing_options(horizontal=False) == ["stop", "swing"]
+    assert device.vane_positions() == []
+
+
+async def test_vane_position(device: RoomAC) -> None:
+    assert device.vane_position is None
+    await device.async_control(swing_v="position_2")
+    assert device.vane_position == "position_2"
+    assert device.swing(horizontal=False) == "stop"
+    # Stopping keeps the fixed position.
+    await device.async_control(swing_v="stop")
+    assert _written(device.transport)["dgc_status.e_1002.e_3001.p_05"] == "020000"
+
+
+async def test_stop_without_stop_bit_fixes_first_position(device: RoomAC) -> None:
+    await device.async_control(swing_v="stop")
+    assert _written(device.transport)["dgc_status.e_1002.e_3001.p_05"] == "010000"
 
 
 async def test_set_temperature_rewrites_mode_state(device: RoomAC) -> None:
