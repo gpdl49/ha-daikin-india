@@ -1,6 +1,6 @@
 # Home Assistant integration for Daikin India: architecture
 
-Status: proposal. The design is based on the decompiled app ([api-spec.md](api-spec.md)) and the survey of existing integrations ([prior-art.md](prior-art.md)). Nothing here has been checked against live traffic yet; see the validation phase below.
+Status: proposal. The design is based on the app's protocol and the survey of existing integrations ([prior-art.md](prior-art.md)). Nothing here has been checked against live traffic yet; see the validation phase below.
 
 ## Goals
 

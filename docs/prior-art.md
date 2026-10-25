@@ -1,6 +1,6 @@
 # Existing Daikin integrations compared with the India backend
 
-This compares four existing Daikin projects against the India app's protocol (see [api-spec.md](api-spec.md) and [../API.md](../API.md)), based on reading their code. Nothing has been tested against a live unit yet.
+This compares four existing Daikin projects against the India app's protocol, based on reading their code. Nothing has been tested against a live unit yet.
 
 ## Summary
 

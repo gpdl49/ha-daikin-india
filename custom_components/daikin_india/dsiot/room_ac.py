@@ -1,7 +1,6 @@
 """Room air conditioner model on top of the DSIOT property tree.
 
-Key names and encodings follow docs/api-spec.md ("Room AC (Ra) DSIOT property
-map"). Writes mirror what the app sends: the current mode's power, mode,
+Writes mirror what the app sends: the current mode's power, mode,
 setpoint, fan and air direction are always rewritten together, plus the
 power-transition marker ``e_3003.p_2D``.
 """

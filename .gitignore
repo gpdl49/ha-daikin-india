@@ -16,3 +16,6 @@ __pycache__/
 # Local tooling / scratch media
 .claude/
 *.mp4
+
+# Private research notes (not for publication)
+private/

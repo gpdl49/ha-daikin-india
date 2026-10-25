@@ -5,7 +5,7 @@ A Home Assistant integration for Daikin air conditioners sold in India. These un
 - **Local control.** It talks directly to the unit's Wi-Fi adapter on your network over the adapter's HTTP API (called "DSIOT"). No cloud connection or account is needed.
 - **Cloud control (optional).** It can also log in to your Daikin AC app account and control the units through Daikin's servers.
 
-> **Status: early testing (v0.1).** The protocol was reverse-engineered from the Android app ([docs/api-spec.md](docs/api-spec.md)) and has not yet been confirmed against every unit. Please report what works and what doesn't. Diagnostics downloads help a lot (see below).
+> **Status: early testing (v0.2).** The protocol was worked out by observing how the Daikin AC app talks to the adapter and has not yet been confirmed against every unit. Please report what works and what doesn't. Diagnostics downloads help a lot (see below).
 
 This project is not affiliated with or endorsed by Daikin.
 
@@ -122,7 +122,6 @@ These parts were inferred from the app's code and haven't been checked on real h
 
 The Daikin AC app and the adapter both use DSIOT, a JSON protocol served at `/dsiot/multireq`. The cloud relays the same requests to the adapter, so the integration uses one code path for local and cloud control. The details are in:
 
-- [docs/api-spec.md](docs/api-spec.md): the full protocol, authentication and property map
 - [docs/architecture.md](docs/architecture.md): the integration's design
 - [docs/prior-art.md](docs/prior-art.md): comparison with other Daikin integrations
 

@@ -2,7 +2,7 @@
 
 Login goes through a Daikin-hosted proxy in front of AWS Cognito. Credentials
 are wrapped in an RSA-encrypted ``code`` blob built with the public key that
-ships in the app. See docs/api-spec.md, "Authentication".
+ships in the app.
 """
 
 from __future__ import annotations
