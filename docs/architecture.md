@@ -140,7 +140,7 @@ class Transport(ABC):
 
 ### Cloud session
 
-- **Stored in the HA config entry:** `phone`, `install_uuid`, and the tokens (`id_token`, `refresh_token`, `cd_*`, `issued_at`, `expires_in`). The password is never stored.
+- **Stored in the HA config entry:** `phone`, `install_uuid`, and the tokens (`id_token`, `refresh_token`, `cd_*`, `issued_at`, `expires_in`). With **Stay signed in** (on by default for password login) the password is stored as well, and is used to log in again when Daikin rejects the refresh token.
 - `login_password(phone, pw)` and `login_otp_start(phone)` / `login_otp_verify(session, otp)` produce a `Tokens` object.
 - `refresh()` runs proactively when less than 5 minutes remain before expiry. If the refresh fails, the integration raises `ConfigEntryAuthFailed`, which starts the HA reauth flow.
 - Refreshes are single-flight: an asyncio lock, and a new refresh isn't started within 60 s of the last one (as in the app).

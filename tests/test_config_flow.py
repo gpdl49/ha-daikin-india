@@ -136,6 +136,27 @@ async def test_cloud_password_flow(hass: HomeAssistant) -> None:
     assert result["result"].unique_id == "cloud_user-1"
     assert result["data"][CONF_CONNECTION] == CONNECTION_CLOUD
     assert result["data"][CONF_TOKENS]["id_token"] == "id"
+    assert result["data"][CONF_PASSWORD] == "secret"
+
+
+async def test_cloud_password_flow_without_storing(hass: HomeAssistant) -> None:
+    result = await _start(hass, "cloud")
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "cloud_password"}
+    )
+    with (
+        patch(
+            "custom_components.daikin_india.config_flow.CloudAuth.async_login_password",
+            return_value=TOKENS,
+        ),
+        patch(SETUP, return_value=True),
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PHONE: "98765 43210", CONF_PASSWORD: "secret", "store_password": False},
+        )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert CONF_PASSWORD not in result["data"]
 
 
 async def test_cloud_otp_flow(hass: HomeAssistant) -> None:
@@ -271,7 +292,7 @@ async def test_cloud_title_hides_phone(hass: HomeAssistant) -> None:
             result["flow_id"], {CONF_PHONE: "+919876543210", CONF_PASSWORD: "secret"}
         )
     assert "9876543210" not in result["title"]
-    assert CONF_PASSWORD not in result["data"]
+    assert result["data"][CONF_PASSWORD] == "secret"  # stored by default
 
 
 async def test_cloud_reauth(hass: HomeAssistant) -> None:
@@ -281,12 +302,14 @@ async def test_cloud_reauth(hass: HomeAssistant) -> None:
         data={
             CONF_CONNECTION: CONNECTION_CLOUD,
             CONF_PHONE: "+919876543210",
-            CONF_INSTALL_UUID: "install-1",
-            CONF_TOKENS: {"id_token": "old", "refresh_token": "old"},
+            CONF_INSTALL_UUID: "uuid-1",
+            CONF_TOKENS: TOKENS.as_dict(),
+            CONF_PASSWORD: "old",
         },
     )
     entry.add_to_hass(hass)
     result = await entry.start_reauth_flow(hass)
+    assert result["type"] is FlowResultType.MENU
     assert result["step_id"] == "reauth_cloud"
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {"next_step_id": "cloud_password"}
@@ -313,8 +336,10 @@ async def test_cloud_reauth(hass: HomeAssistant) -> None:
         patch(SETUP, return_value=True),
     ):
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {CONF_PHONE: "+919876543210", CONF_PASSWORD: "secret"}
+            result["flow_id"],
+            {CONF_PHONE: "+919876543210", CONF_PASSWORD: "new", "store_password": False},
         )
+    assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reauth_successful"
-    assert entry.data[CONF_TOKENS]["id_token"] == "id"
-    assert entry.data[CONF_INSTALL_UUID] == "install-1"
+    assert CONF_PASSWORD not in entry.data
+    assert entry.data[CONF_INSTALL_UUID] == "uuid-1"
