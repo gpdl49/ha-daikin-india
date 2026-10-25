@@ -70,6 +70,11 @@ async def _async_setup_local(hass: HomeAssistant, entry: DaikinConfigEntry) -> D
 
 
 async def _async_setup_cloud(hass: HomeAssistant, entry: DaikinConfigEntry) -> DaikinRuntimeData:
+    # Entries created before 0.2.0 have the full phone number in the title.
+    phone = entry.data[CONF_PHONE]
+    if entry.title == f"Daikin account {phone}":
+        hass.config_entries.async_update_entry(entry, title=f"Daikin account …{phone[-4:]}")
+
     @callback
     def _save_tokens(tokens: Tokens) -> None:
         hass.config_entries.async_update_entry(

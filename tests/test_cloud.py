@@ -296,3 +296,14 @@ async def test_restart_with_rejected_refresh_logs_in_again(
     assert entry.data[CONF_TOKENS]["refresh_token"] == "rt-1"
     assert entry.data[CONF_PASSWORD] == "pw"
     assert aioclient_mock.mock_calls[-1][3]["Authorization"] == "Bearer id-1"
+
+
+async def test_old_title_with_phone_is_masked(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.post(TOKEN, status=400, json={"error": "invalid_grant"})
+    entry = _cloud_entry(hass)
+    hass.config_entries.async_update_entry(entry, title="Daikin account +919876543210")
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.title == "Daikin account …3210"

@@ -19,3 +19,4 @@ __pycache__/
 
 # Private research notes (not for publication)
 private/
+*.log
