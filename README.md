@@ -87,7 +87,7 @@ Add `climate-fan-modes`, `climate-swing-modes` or `climate-preset-modes` to the 
 ## Troubleshooting
 
 - **"This adapter does not support the DSIOT protocol".** The adapter's firmware predates DSIOT. Update the adapter from the GO DAIKIN app and try again.
-- **Cloud account asks you to log in again (`invalid_grant`).** Daikin ended the saved session, for example after a long outage or a sign-in elsewhere. With **Stay signed in** ticked, the integration logs in again by itself; otherwise open the repair prompt and log in. If it keeps happening, please open an issue with debug logs.
+- **Cloud account asks you to log in again (`invalid_grant`).** Daikin ended the saved session, for example after a long outage. With **Stay signed in** ticked, the integration logs in again by itself; otherwise open the repair prompt and log in. If it keeps happening, please open an issue with debug logs.
 - **A change takes a few seconds to show.** Cloud units relay state with a delay. The integration shows your change straight away and confirms it with the unit a few seconds later.
 - **Discovery finds nothing.** Enter the IP address instead. You can find it in your router's DHCP client list.
 - **Something looks wrong.** Open the device page, choose **Download diagnostics**, and attach the file to an issue. The file contains the raw values the unit reports; personal identifiers (MAC, names, tokens, phone number) are redacted.
@@ -101,7 +101,7 @@ Add `climate-fan-modes`, `climate-swing-modes` or `climate-preset-modes` to the 
 
 ## Testing checklist
 
-**Tested so far:** 7 cloud-connected units with Wi-Fi adapter firmware 3.10.0 (model codes 8C70 and 9C70, as shown in diagnostics). Local control, Heat mode, humidity sensors and fixed louver positions haven't been tested yet.
+**Tested so far:** 7 cloud-connected units with Wi-Fi adapter firmware 3.10.0 (model codes 8C70 and 9C70, as shown in diagnostics). The controls work through the cloud, the session stays logged in for weeks, and the GO DAIKIN phone app stays logged in alongside the integration. Local control, Heat mode, humidity sensors and fixed louver positions haven't been tested yet.
 
 If you're helping test, please open an issue with your results. Include your AC's model, the adapter firmware (shown on the device page) and a **diagnostics download**. Include one from a local entry and one from a cloud entry if you can. For anything that fails, add debug logs (see Troubleshooting).
 
@@ -111,8 +111,6 @@ If you're helping test, please open an issue with your results. Include your AC'
 - [ ] **Manual IP.** Does "Enter adapter IP address" work?
 - [ ] **Lock PIN.** If the unit has a lock password set in the GO DAIKIN app, does the integration ask for the PIN and accept it? Does a wrong PIN show an error?
 - [ ] **Cloud: SMS login.** Does logging in with your phone number and an SMS code work?
-- [ ] **Cloud: phone app session.** After logging in from Home Assistant, is the GO DAIKIN app on your phone still logged in? (Some Daikin accounts may allow only one session.)
-- [ ] **Cloud: staying logged in.** Leave the cloud entry running for more than 2 hours. Does it keep updating without asking you to log in again?
 
 ### Reading state
 
@@ -142,7 +140,6 @@ Check each of these from Home Assistant. Confirm that the unit responds (it beep
 
 These haven't been confirmed on real hardware yet. Please call them out in your report:
 
-- Whether writes are accepted as sent. If a control does nothing or shows an error, include the error message and debug logs.
 - Whether any mode shows as unknown. This can happen with Humidify, or while the unit is in Auto mode.
 
 ## How it works
