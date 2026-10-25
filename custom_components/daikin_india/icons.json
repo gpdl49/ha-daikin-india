@@ -6,7 +6,6 @@
           "preset_mode": {
             "default": "mdi:circle-medium",
             "state": {
-              "none": "mdi:circle-medium",
               "eco": "mdi:leaf",
               "boost": "mdi:rocket-launch"
             }
@@ -28,7 +27,6 @@
             "state": {
               "stop": "mdi:arrow-oscillating-off",
               "swing": "mdi:arrow-up-down",
-              "auto": "mdi:arrow-oscillating",
               "natural": "mdi:weather-windy",
               "circulation": "mdi:autorenew",
               "comfort": "mdi:weather-windy-variant"
@@ -38,8 +36,7 @@
             "default": "mdi:arrow-oscillating",
             "state": {
               "stop": "mdi:arrow-oscillating-off",
-              "swing": "mdi:arrow-left-right",
-              "auto": "mdi:arrow-oscillating"
+              "swing": "mdi:arrow-left-right"
             }
           }
         }
