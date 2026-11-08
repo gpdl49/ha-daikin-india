@@ -1,0 +1,14 @@
+[tools]
+python = "3.13"
+uv = "0.13.7"
+hk = "2.11.1"
+jactionlint = "2.5.0"
+ruff = "0.17.4"
+
+[tasks.setup]
+description = "Install tools, Python dev dependencies, and git hooks"
+run = """
+uv venv --python 3.13 --allow-existing
+uv pip install pytest-homeassistant-custom-component ruff
+hk install --mise
+"""

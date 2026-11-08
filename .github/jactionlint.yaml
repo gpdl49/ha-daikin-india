@@ -1,0 +1,3 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jdx/jactionlint/main/schema/jactionlint-config.json
+# correctness: syntax/expression checks (actionlint parity); default adds policy rules we enforce in CI separately.
+profile: correctness
