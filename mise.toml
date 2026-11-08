@@ -1,0 +1,10 @@
+[tools]
+python = "3.13"
+uv = "0.13.7"
+
+[tasks.setup]
+description = "Create a virtualenv and install dev dependencies"
+run = """
+uv venv --python 3.13
+uv pip install pytest-homeassistant-custom-component ruff
+"""

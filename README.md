@@ -151,6 +151,18 @@ The GO DAIKIN app and the adapter both use DSIOT, a JSON protocol served at `/ds
 
 ## Development
 
+Install [mise](https://mise.jdx.dev), then:
+
+```bash
+mise install
+mise run setup
+uv run --no-project pytest
+uv run --no-project ruff check custom_components tests
+uv run --no-project ruff format --check custom_components tests
+```
+
+Without mise, use Python 3.13 and [uv](https://docs.astral.sh/uv/) directly:
+
 ```bash
 uv venv --python 3.13
 uv pip install pytest-homeassistant-custom-component ruff
