@@ -155,7 +155,7 @@ Install [mise](https://mise.jdx.dev), then:
 
 ```bash
 mise install
-mise run setup
+mise run setup   # also installs hk pre-commit / pre-push hooks
 uv run --no-project pytest
 uv run --no-project ruff check custom_components tests
 uv run --no-project ruff format --check custom_components tests

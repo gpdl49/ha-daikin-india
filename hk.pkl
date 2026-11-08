@@ -1,0 +1,26 @@
+amends "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.11.1/hk@2.11.1#/Builtins.pkl"
+
+local linters = new Mapping {
+  ["jactionlint"] = Builtins.jactionlint
+  ["ruff"] = Builtins.ruff
+  ["ruff_format"] = Builtins.ruff_format
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = false
+    stash = "git"
+    steps = linters
+  }
+  ["pre-push"] {
+    steps {
+      ["pytest"] {
+        glob = List("**/*.py", "pyproject.toml", "tests/**")
+        check = "uv run --no-project pytest"
+      }
+    }
+  }
+}
+
+steps = linters
